@@ -3,3 +3,6 @@ data/interim/
 !data/MANIFEST.md
 .env
 *.zip
+junk
+robots.html
+test_users/
