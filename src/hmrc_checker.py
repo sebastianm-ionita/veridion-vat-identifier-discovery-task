@@ -5,6 +5,7 @@ import time
 
 from config import BASE, FORM_URL, CheckResult, Verdict
 from html_parser import parse_known_page
+from html_storage import save_html
 
 class HMRCChecker:
     def __init__(self, delay: float = 2.0):
@@ -58,18 +59,21 @@ class HMRCChecker:
         location = r.headers.get("Location", "")
 
         if location.endswith("/unknown"):
-            return CheckResult(vrn=vrn, verdit=Verdict.UNKNOWN, timestamp=now)
+            return CheckResult(vrn=vrn, verdict=Verdict.UNKNOWN, timestamp=now)
 
         if not location.endswith("/known"):
             return CheckResult(vrn=vrn, verdict=Verdict.ERROR, timestamp=now, error=f'Location unexpected: {location}')
+
 
         page = self.session.get(f'{BASE}/known', timeout=30)
         with open("succespage.html", "w+") as f:
             f.write(page.text)
 
+        html_path = save_html(vrn, page.text)
+
         time.sleep(self.delay)
 
         name, address = parse_known_page(page.text, vrn)
-        return CheckResult(vrn=vrn, verdict=Verdict.VALID, timestamp=now, registered_name=name, registered_address=address)
+        return CheckResult(vrn=vrn, verdict=Verdict.VALID, timestamp=now, registered_name=name, registered_address=address, html_path=html_path)
 
 

@@ -7,7 +7,7 @@ BASE = "https://www.tax.service.gov.uk/check-vat-number"
 FORM_URL = f"{BASE}/enter-vat-details"
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-RAW_DIR = BASE_DIR / 'result' / 'raw_html'
+RAW_DIR = BASE_DIR / 'results' / 'raw_html'
 RAW_DIR.mkdir(parents=True, exist_ok=True)
 
 class Verdict(str, Enum):

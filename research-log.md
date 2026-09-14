@@ -92,7 +92,7 @@ Token-ul e refolosibil toata sesiunea deci pot face 1 GET la inceput si 1 POST /
 
 [12:45 PM] : Inceput script-ul html_parser.py care va contine functia parse_known_page() -> name, address sau None
 
-Am analizat html-ul paginii /known si o sa folosesc BeautifulSoup sa caut heading-ul ce contine 'Registered business name' care este urmat intotdeauna de un paragraph ce contine numele business-ului, la fel pentru 'Registered business address' doar ca separ liniile din interiorul <p> cu un '\n'. De asemanea verific ca VRN-ul cautat sa fie acelasi cu cel de pe pagina. Si o functie ce extrage codul postal de pe penultima linie folosind regex. (O sa ma folosesc de nume si cod postal pentru a decide verdictul)
+Am analizat html-ul paginii /known si o sa folosesc BeautifulSoup sa caut heading-ul ce contine 'Registered business name' care este urmat intotdeauna de un paragraph ce contine numele business-ului, la fel pentru 'Registered business address' doar ca separ liniile din interiorul <p> cu un '\n'. De asemanea verific ca VRN-ul cautat sa fie acelasi cu cel de pe pagina. Si o functie ce extrage codul postal de pe penultima linie folosind regex. (TODO: O sa ma folosesc de nume si cod postal pentru a decide verdictul)
 
 [1:50 PM] : Creat html_storage.py.
 
@@ -108,4 +108,18 @@ Va verifica 20-30 de VRN-uri, iar eu voi face urmatoarele verificari:
 4. am toate tipurile de verdict-uri
 5. html-urile sunt salvate si pot fii accesate
 
+[3:48 PM] : Parametrii alesi.
 
+- delay 2 secunde intre requesturi, browser-ul face 10 request-uri, eu fac 1-2 ca sa nu declansez analytics si incarc serviciul mai putin decat cineva care verifica manual
+- user-agent care ma identifica cu link la repo si mail.
+- fara paralelism , pentru ca 2 request-uri simultane s-ar suprapune si as pune detalii gresite firmei
+
+[3:50 PM] : Am terminat checker.py. Am scris logica de verificare in spatele unei interfete, nu direct legata de HMRC, din doua motive concrete:
+
+1. Calea oficiala (API-ul HMRC) exista, dar am decis sa n-o folosesc din motive de scop si termeni. Daca situatia se schimba - primesc acces la productie, sau se schimba conditiile trec pe ea schimband o singura implementare, fara sa umblu in restul pipeline-ului.
+
+2. Task-ul intreaba la final cum ar arata acelasi lucru pentru Germania, iar acolo verificarea se face prin VIES, care nu se comporta identic pentru fiecare stat membru. Daca tin verificarea separata de restul (esantionare, discovery, matching), schimbarea de tara inseamna o implementare noua de verifier, nu un pipeline nou. Asta imi da si un raspuns mai bun la intrebarea "ar supravietui pipeline-ul tau mutarii", pot arata exact ce se schimba si ce ramane.
+
+[16:40 PM] : Am rulat checker-ul pe 27 VRN-uri. Rezultat: 13 VALID, 11 UNKNOWN, 3 MALFORMED. Toate cele 5 verificari din plan au trecut jsonl complet, a doua rulare tot cached, reluare dupa Ctrl+C ok, toate verdictele prezente, html-urile salvate si accesibile.
+
+Throughput masurat din timestamp-uri: ~2.2s per UNKNOWN (1 request) si ~4.4s per VALID (2 requesturi). Confirma ca designul cu  allow_redirects=False injumatateste costul.

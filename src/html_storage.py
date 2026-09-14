@@ -9,7 +9,7 @@ def save_html(vrn: str, html: str) -> str:
     # if page was changed it will be saved with a different hash
     # if page is already created there are no duplicates created
 
-    hashed = hashlib.sha256(html.encode()).hexdigest[:12]
+    hashed = hashlib.sha256(html.encode()).hexdigest()[:12]
     path = RAW_DIR / f"{vrn}_{hashed}.html"
     path.write_text(html, encoding="utf-8")
 
