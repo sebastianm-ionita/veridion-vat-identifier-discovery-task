@@ -84,3 +84,17 @@ POST 1: 303 /check-vat-number/known
 POST 2: 303 /check-vat-number/unknown
 
 Token-ul e refolosibil toata sesiunea deci pot face 1 GET la inceput si 1 POST / verificare. Redirect-ul e 303, deci codul corect si in plus, la POST2 am pus un vrn din sandbox-ul hmrc deci da dovada ca cele de acolo sunt fictive.
+
+[17:20 PM] : Inceput script-ul hmrc_checker.py
+
+
+*14 sep*
+
+[12:45 PM] : Inceput script-ul html_parser.py care va contine functia parse_known_page() -> name, address sau None
+
+Am analizat html-ul paginii /known si o sa folosesc BeautifulSoup sa caut heading-ul ce contine 'Registered business name' care este urmat intotdeauna de un paragraph ce contine numele business-ului, la fel pentru 'Registered business address' doar ca separ liniile din interiorul <p> cu un '\n'. De asemanea verific ca VRN-ul cautat sa fie acelasi cu cel de pe pagina. Si o functie ce extrage codul postal de pe penultima linie folosind regex. (O sa ma folosesc de nume si cod postal pentru a decide verdictul)
+
+[1:17 PM] : Inapoi la hmrc_checker.py.
+
+- Urmeaza salvarea html-ului pentru a nu reface cererile in caz de am gresit ceva la functii, si pentru a avea dovada cifrelor din raport.
+- Urmeaza implementarea cache-ului local pentru a nu relua verificari in caz de crash.

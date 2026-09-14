@@ -1,8 +1,9 @@
+from config import BASE
+
 import requests, re
 
-BASE = "https://www.tax.service.gov.uk/check-vat-number"
 s = requests.Session()
-s.headers["User-Agent"] = "vat-discovery-research/0.1 (contact: sebi.ionita23@gmail.com)"
+s.headers["User-Agent"] = "vat-identifier-discovery/0.1 (contact: sebi.ionita23@gmail.com)"
 
 r = s.get(f"{BASE}/enter-vat-details")
 token = re.search(r'name="csrfToken"[^>]*value="([^"]+)"', r.text).group(1)

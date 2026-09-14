@@ -6,3 +6,7 @@ data/interim/
 junk
 robots.html
 test_users/
+results/raw_html/
+*.html
+__pycache__/
+*.txt
