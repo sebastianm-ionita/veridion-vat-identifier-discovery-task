@@ -94,7 +94,18 @@ Token-ul e refolosibil toata sesiunea deci pot face 1 GET la inceput si 1 POST /
 
 Am analizat html-ul paginii /known si o sa folosesc BeautifulSoup sa caut heading-ul ce contine 'Registered business name' care este urmat intotdeauna de un paragraph ce contine numele business-ului, la fel pentru 'Registered business address' doar ca separ liniile din interiorul <p> cu un '\n'. De asemanea verific ca VRN-ul cautat sa fie acelasi cu cel de pe pagina. Si o functie ce extrage codul postal de pe penultima linie folosind regex. (O sa ma folosesc de nume si cod postal pentru a decide verdictul)
 
-[1:17 PM] : Inapoi la hmrc_checker.py.
+[1:50 PM] : Creat html_storage.py.
 
 - Urmeaza salvarea html-ului pentru a nu reface cererile in caz de am gresit ceva la functii, si pentru a avea dovada cifrelor din raport.
 - Urmeaza implementarea cache-ului local pentru a nu relua verificari in caz de crash.
+
+[3:35 PM] : Inceput checker.py.
+
+Va verifica 20-30 de VRN-uri, iar eu voi face urmatoarele verificari:
+1. checks.jsonl are ac numar de linii ca numarul de VRN-uri
+2. daca rulez a doua oara totul e cached
+3. opresc rularea si continua de unde a ramas
+4. am toate tipurile de verdict-uri
+5. html-urile sunt salvate si pot fii accesate
+
+

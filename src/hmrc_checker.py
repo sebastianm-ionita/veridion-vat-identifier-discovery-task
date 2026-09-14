@@ -73,8 +73,3 @@ class HMRCChecker:
         return CheckResult(vrn=vrn, verdict=Verdict.VALID, timestamp=now, registered_name=name, registered_address=address)
 
 
-
-c = HMRCChecker()
-c.check('220430231')
-
-
