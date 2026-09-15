@@ -120,6 +120,19 @@ Va verifica 20-30 de VRN-uri, iar eu voi face urmatoarele verificari:
 
 2. Task-ul intreaba la final cum ar arata acelasi lucru pentru Germania, iar acolo verificarea se face prin VIES, care nu se comporta identic pentru fiecare stat membru. Daca tin verificarea separata de restul (esantionare, discovery, matching), schimbarea de tara inseamna o implementare noua de verifier, nu un pipeline nou. Asta imi da si un raspuns mai bun la intrebarea "ar supravietui pipeline-ul tau mutarii", pot arata exact ce se schimba si ce ramane.
 
-[16:40 PM] : Am rulat checker-ul pe 27 VRN-uri. Rezultat: 13 VALID, 11 UNKNOWN, 3 MALFORMED. Toate cele 5 verificari din plan au trecut jsonl complet, a doua rulare tot cached, reluare dupa Ctrl+C ok, toate verdictele prezente, html-urile salvate si accesibile.
+[4:40 PM] : Am rulat checker-ul pe 27 VRN-uri. Rezultat: 13 VALID, 11 UNKNOWN, 3 MALFORMED. Toate cele 5 verificari din plan au trecut jsonl complet, a doua rulare tot cached, reluare dupa Ctrl+C ok, toate verdictele prezente, html-urile salvate si accesibile.
 
 Throughput masurat din timestamp-uri: ~2.2s per UNKNOWN (1 request) si ~4.4s per VALID (2 requesturi). Confirma ca designul cu  allow_redirects=False injumatateste costul.
+
+[4:55 PM] : Serviciul nu verifica checksum-ul, GB111111111, GB999999999, GB555555555, GB123456789 au checksum invalid si au iesit UNKNOWN, nu MALFORMED. Validarea se opreste la forma (prefix, 9 cifre, fara litere), nu face % 97. Deci nu pot diferentia "checksum  gresit" de "neinregistrat" prin serviciu, filtrarea pe checksum o fac local, inainte sa trimit cererea.
+
+[5:30 PM] : Am comparat adresele HMRC cu Companies House pe cele 13 VALID, dintre care 11/13 MATCH pe cod postal. In general HMRC intoarce adresa de sediu social, Royal Mail fiin singurul caz real de adresa diferita (CH: Farringdon Road EC1A 1AA, HMRC: Group Tax la Chesterfield S49 1PF)
+
+[5:37 PM] : BP nu era adresa diferita, era firma gresita. Scriptul meu oprea la prima potrivire pe nume si luase BP INTERNATIONAL LTD #10543031, de la 20-22 Wenlock Road N1 7GU, adresa de formation agent. Am scos oprirea si am colectat toate potrivirile: exista 2 firme cu acelasi nume normalizat. A doua, #00542515 de pe Chertsey Road TW16 7BP, e cea reala si face MATCH cu HMRC.
+
+De retinut:
+- numele nu e identificator, CH are firme distincte cu acelasi nume
+- la potrivirea pe nume am o lista de candidati, codul postal decide
+- daca niciun candidat are codul postal potrivit -> UNCERTAIN
+
+[5:39 PM] : Detaliu: HMRC are "CHERSTEY ROAD" in loc de Chertsey. Typoo in sursa de referinta. HMRC-ul are informatii gresite uneori.
