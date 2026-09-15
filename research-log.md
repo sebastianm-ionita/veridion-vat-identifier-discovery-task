@@ -136,3 +136,54 @@ De retinut:
 - daca niciun candidat are codul postal potrivit -> UNCERTAIN
 
 [5:39 PM] : Detaliu: HMRC are "CHERSTEY ROAD" in loc de Chertsey. Typoo in sursa de referinta. HMRC-ul are informatii gresite uneori.
+
+
+*15 sep*
+
+[2:50 PM] : Profilat populatia din Companies House in 'population_profile.json'
+
+5.689.367 randuri, din care 5.171.600 ACTIVE. Task-ul zice 4.2M Live companies eu am 5.17M doar ACTIVE, plus inca 402K "ACTIVE-Proposal to Strike off". 2.73M inregistrari VAT la nivel national (incluzand sole traders, am luat cifra de pe ONS) la 5.17M firme active. Maxim 52% din firme ar putea avea VAT, dar realist mult mai putine au.
+
+Distributia pe conturi e dezechilibrata:
+  MICRO ENTITY          1.668.834
+  NO ACCOUNTS FILED     1.347.758
+  TOTAL EXEMPTION FULL  1.227.653
+  DORMANT                 565.741
+  ......
+  FULL + MEDIUM + GROUP   112.450  (~2.2%)
+
+Primele patru fac 93% din firmele active. DORMANT (11%) aproape sigur n-au VAT (o firma dormanta nu tranzactioneaza). NO ACCOUNTS FILED (26%) sunt in mare nou-infiintate sau care n-au inceput activitatea.
+
+Pe vechime: 2.854.461 firme active infiintate in anii 2020 = 55% din total. Plus 1.464.327 in 2010. Deci 83% din firmele active au sub 16 ani. Multe dintre ele se suprapun cu NO ACCOUNTS FILED.
+
+Pe SIC: 605.263 sunt Real Estate = 12%. Nicio diviziune nu domina distributia. 216.320 fara SIC.
+
+[3:12 PM] : Datele de infiintare contin erori evidente. Am firme active infiintate in 1320, 1410, 1500 etc., Companies House exista din 1844, orice inainte de asta e eroare de date. Sunt putine companii dar confirma ce am vazut la "Cherstey Road", sursele nu sunt intotdeauna corecte.
+
+De verificat: diviziunile SIC 98 (125K) si 99 (98K), par cam mari pentru ce reprezinta, probabile sunt marcaje pentru DORMANT
+
+[3:30 PM] : Verificat ce se intampla cu SIC 98 si 99. (src/sic99_98_uncertainty.py)
+
+ 126,042  98000 - Residents property management
+ 105,409  99999 - Dormant Company
+     645  98200 - Undifferentiated service-producing activities of private households for own use
+     629  99000 - Activities of extraterritorial organizations and bodies
+     506  98100 - Undifferentiated goods-producing activities of private households for own use
+     153  9999 - Dormant company
+      12  9800 - Residents property management
+
+99999 chiar e marcaj, 105.409 firme se marcheaza DORMANT prin SIC separat de cele 565.741 marcate DORMANT la account_category.
+
+98000 nu este marcaj, 126.042 societati de administrare a blocurilor, mai mult ca sigur nu apar niciodata ca furnizor intr-un sistem de achizitii.
+
+Al treilea semn ca datele nu sunt uniforme este ca coexista coduri de 4/5 cifre pentru acelasi lucru (99999/9999 si 98000/9800).
+
+[4:20 PM] : Verificat suprapunerea dintre SIC dormand (99999/9999) si account_category DORMANMT.
+
+97.542 firme active cu SIC dormand din care 71.8% sunt si DORMANT la conturi. General, DORMANT doar 10.9% din firmele active, deci este o asociere puternica, dar nu o identitate.
+
+27.482 (28.2%) isi declara SIC-ul ca "Dormant Company" dar depun conturi de firma activa: 10.159 MICRO ENTITY, 9.838 NO ACCOUNTS FILED, 5.261 TOTAL EXEMPTION FULL. Contradictie in sursa SIC zice una conturile alta, nu stiu care e corecta
+
+Invers: din 565.741 DORMANT la conturi, doar 70.020 au si SIC 99999. Deci ~495.000 sunt dormante fara sa o declare prin SIC.
+
+In concluzie DORMANT la conturi e criteriul mai cuprinzator. SIC 99999 adauga doar ~27k peste el, si alea sunt tocmai cazurile contradictorii. Daca filtrez, filtrez pe account_category si tratez SIC-ul ca semnal secundar.
