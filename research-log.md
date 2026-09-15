@@ -187,3 +187,35 @@ Al treilea semn ca datele nu sunt uniforme este ca coexista coduri de 4/5 cifre 
 Invers: din 565.741 DORMANT la conturi, doar 70.020 au si SIC 99999. Deci ~495.000 sunt dormante fara sa o declare prin SIC.
 
 In concluzie DORMANT la conturi e criteriul mai cuprinzator. SIC 99999 adauga doar ~27k peste el, si alea sunt tocmai cazurile contradictorii. Daca filtrez, filtrez pe account_category si tratez SIC-ul ca semnal secundar.
+
+[7:15 PM] : Filtrat populatia ca sa am din ce trage sample-ul. (src/population_to_test_on.py) (output in result/population_to_test_on.json)
+
+Am scos firmele cu account_category DORMANT (nu tranzactioneaza, deci nu pot fi furnizor), cele cu SIC 98000 - Residents property management (societati de administrare a blocurilor, active dar nu factureaza un producator) si cele cu NO ACCOUNTS FILED. Au ramas 3.187.409 firme din 5.171.600 active, adica 61.6%.
+
+Filtrul nu e neutru pe vechime:
+  anii 2020 - inainte de filtru 55.2% din populatie, dupa filtru 40.6%
+  anii 2010 - inainte 28.3%, dupa 38.4%
+
+Excluderea NO ACCOUNTS FILED a scos ~1.5M firme recente, pentru ca o firma infiintata acum cateva luni n-a ajuns inca la primul termen de depunere. Printre ele sunt si comercianti reali.
+
+Am acceptat asta pentru ca firmele foarte noi au cea mai mica sansa sa fie inregistrate la TVA si mi-ar fi umplut sample-ul cu cazuri unde n-am ce gasi. Dar efectul secundar e ca imi creste artificial rata de descoperire am scos cazurile grele. De asta raportez rata si pe populatia nefiltrata, ca sa se vada cat a adus filtrul.
+
+[7:40 PM] Am refacut filtrul.
+
+Am scos criteriul NO ACCOUNTS FILED si l-am inlocuit cu unul explicit pe vechime: exclud firmele infiintate cu mai putin de 12 luni inainte de data snapshotului (01-09-2026). Motivul: firmele au 21 de luni pentru prima situatie financiara, deci sub 12 luni nu am cum sa judec activitatea din depuneri.
+
+Am schimbat pentru ca  NO ACCOUNTS FILED amesteca doua populatii diferite firme care n-au depus niciodata nimic, si firme infiintate recent care pur si simplu n-au ajuns la termen. Scotand toata categoria, excludeam si comercianti reali. Criteriul pe vechime face exact ce spune.
+
+Rezultat: 3.832.677 firme pastrate (fata de 3.187.409 cu filtrul vechi), deci am recuperat ~645.000 de firme care au NO ACCOUNTS FILED dar au peste 12 luni.
+
+Distributia pe decade, cat de mult deformeaza filtrul populatia:
+             nefiltrat   filtru vechi   filtru nou
+  2020s        55.2%        40.6%         48.1%
+  2010s        28.3%        38.4%         33.5%
+Tot deviaza, dar acum devierea e intentionata si o pot explica.
+
+Excluderi, pe motiv:
+  691.634  sub 12 luni
+  565.741  DORMANT
+  517.767  status diferit de Active
+  81.548  SIC 98 (administrare blocuri)
