@@ -222,16 +222,29 @@ Excluderi, pe motiv:
 
 *16 sep*
 
-[12:38 PM]
+[12:38 PM] : Impartirea pe grupe, dupa account_category ca proxy de marime. Companies House nu da cifra de afaceri, dar tipul de conturi depuse depinde de praguri legale de marime, deci e un indiciu indirect.
 
-Impartirea pe grupe:
-Mici = MICRO + TOTAL EXEMPTION SMALL + ACCOUNTS TYPE NOT AVAILABLE + PARTIAL EXEMPTION = 1.620.885 
-Medii = SMALL + UNAUDITED ABRIDGED + TOTAL EXEMPTION FULL + AUDIT EXEMPTION SUBSIDIARY + FILING EXEMPTION SUBSIDIARY = 1.452.459
-Mari = FULL + MEDIUM + GROUP + AUDITED ABRIDGED = 113.471
-Necunoscut = NO ACCOUNTS FILED = 645.827
+  Mici       MICRO + TOTAL EXEMPTION SMALL + ACCOUNTS TYPE NOT AVAILABLE
+             + PARTIAL EXEMPTION                          1.620.885  (50.8%)
+  Medii      SMALL + UNAUDITED ABRIDGED + TOTAL EXEMPTION FULL
+             + AUDIT/FILING EXEMPTION SUBSIDIARY          1.452.459  (45.5%)
+  Mari       FULL + MEDIUM + GROUP + AUDITED ABRIDGED       113.471   (3.6%)
+  Necunoscut NO ACCOUNTS FILED                              645.827
 
-IAU RATA EGAL DIN FIECARE GRUP CA SA DAU UN PROCENT PE GRUP DAR LA FINAL SI UN PROCENT PONDERAT
-75 firme/grupa -> N = 300 companii
+"Necunoscut" e grupa separata pentru ca sunt firme cu peste 12 luni care n-au depus conturi. Nu pot spune daca sunt mari sau mici si reprezinta 17% din populatie, prea mult ca sa le ignor sau sa le bag in alta categorie.
 
-[12:58 PM]
-Incep build_sample.py
+[12:45 PM] : Iau egal din fiecare grupa, 75 + 75 + 75 + 75 = 300.
+
+De ce: grupa "mari" e 3.6% din populatie, deci proportional as avea ~11 firme din 300, prea putine ca sa raportez ceva pe ele. Cu esantion egal pot spune "rata e X% la firmele mari si Y% la cele mici", ceea ce raspunde la intrebarea de business: pentru ce fel de furnizori putem livra.
+
+Cifra globala o sa o calculez la final ca medie ponderata cu marimile reale a grupelor din populatia si o raportez separat cu tot cu formula de calcul.
+
+[13:15 PM] : Implementat build_sample.py cu reservoid sampling si seed fix 23.
+
+Reservoir pentru ca nu vreau sa tin 1.6M de randuri in memorie ca sa aleg 75. Algoritmul trece o data prin fisier si tine exact 75 per grupa: primele 75 intra direct, iar firma numarul n intra cu probabilitatea 75/n si da afara una la intamplare. Fiecare firma ajunge in esantion cu aceeasi sansa, si nu trebuie sa stiu totalul dinainte.
+
+SEED fix ca oricine sa reproduca aceleasi 300 de firme.
+
+Am mutat filtrele in config.py pentru ca e folosit si de script-ul de filtrare. Verificarea am facut-o uitandu-ma la numarul de eligibile/grupa raportat de build_sample si population (1.620.885 / 1.452.459 / 113.471 / 645.827), ambele au aceasi populatie.
+
+Rezultatul se afla in data/sample.csv, 300 de firme fara duplicate pe company_number.

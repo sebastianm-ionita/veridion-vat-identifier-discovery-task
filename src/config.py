@@ -15,7 +15,7 @@ RAW_DIR.mkdir(parents=True, exist_ok=True)
 CH_CSV = BASE_DIR / 'data' / 'raw' / 'companies-house' / 'BasicCompanyDataAsOneFile-2026-09-01.csv'
 
 # CONSTANTS
-SEED = 42
+SEED = 23
 PER_GROUP = 75
 SNAPSHOT_DATE = datetime(2026, 9, 1)
 MIN_AGE_MONTHS = 12
