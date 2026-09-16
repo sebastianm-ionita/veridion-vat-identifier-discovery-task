@@ -4,14 +4,11 @@ import sys
 from pathlib import Path
 from collections import Counter
 from datetime import datetime, timezone
+from config import CH_CSV, SNAPSHOT_DATE, MIN_AGE_MONTHS
 
-CH_CSV = "data/raw/companies-house/BasicCompanyDataAsOneFile-2026-09-01.csv"
 OUT_FILE = Path("results/population_to_test_on.json")
 
 csv.field_size_limit(sys.maxsize)
-
-SNAPSHOT_DATE = datetime(2026, 9, 1)
-MIN_AGE_MONTHS = 12
 
 stats = {
     "total": 0,
@@ -91,7 +88,7 @@ with open(CH_CSV, newline="", encoding="utf-8", errors="replace") as f:
         stats["incorporation_decade"][decade(row.get("IncorporationDate", ""))] += 1
 
 out = {
-    "source_file": Path(CH_CSV).name,
+    "source_file": CH_CSV.name,
     "snapshot_date": SNAPSHOT_DATE.date().isoformat(),
     "timestamp": datetime.now(timezone.utc).isoformat(),
     "total_rows": stats["total"],

@@ -4,8 +4,8 @@ import re
 import sys
 from pathlib import Path
 from collections import Counter
+from config import CH_CSV
 
-CH_CSV = "data/raw/companies-house/BasicCompanyDataAsOneFile-2026-09-01.csv"
 
 csv.field_size_limit(sys.maxsize)
 

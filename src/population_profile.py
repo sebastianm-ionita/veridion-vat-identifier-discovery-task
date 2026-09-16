@@ -5,8 +5,8 @@ import sys
 from pathlib import Path
 from collections import Counter
 from datetime import datetime, timezone
+from config import CH_CSV
 
-CH_CSV = "data/raw/companies-house/BasicCompanyDataAsOneFile-2026-09-01.csv"
 OUT_FILE = Path("results/population_profile.json")
 
 csv.field_size_limit(sys.maxsize)
@@ -66,7 +66,7 @@ with open(CH_CSV, newline="", encoding="utf-8", errors="replace") as f:
 
 # json format
 out = {
-    "source_file": Path(CH_CSV).name,
+    "source_file": CH_CSV.name,
     "timestamp": datetime.now(timezone.utc).isoformat(),
     "total_rows": stats["total"],
     "active_companies": stats["active"],

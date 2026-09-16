@@ -1,8 +1,8 @@
 from collections import defaultdict
 import csv, json, re, sys
 from pathlib import Path
+from config import CH_CSV
 
-CH_CSV = "data/raw/companies-house/BasicCompanyDataAsOneFile-2026-09-01.csv"
 CHECKS = "results/checks.jsonl"
 
 csv.field_size_limit(sys.maxsize)
