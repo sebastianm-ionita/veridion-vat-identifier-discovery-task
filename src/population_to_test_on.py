@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from collections import Counter
 from datetime import datetime, timezone
-from config import CH_CSV, SNAPSHOT_DATE, MIN_AGE_MONTHS
+from config import CH_CSV, SNAPSHOT_DATE, MIN_AGE_MONTHS, sic_division, decade, exclusion_reason
 
 OUT_FILE = Path("results/population_to_test_on.json")
 
@@ -53,36 +53,15 @@ with open(CH_CSV, newline="", encoding="utf-8", errors="replace") as f:
             print(f" ... {i:,} rows")
 
         stats["total"] += 1
-        status = row.get("CompanyStatus", "").strip()
-        stats["status"][status] += 1
+        stats["status"][row.get("CompanyStatus", "").strip()] += 1
 
-        if status != "Active":
-            excluded["not_active"] += 1
-            continue
-
-        cat = row.get("Accounts.AccountCategory", "").strip()
-        if cat == "DORMANT":
-            excluded["dormant"] += 1
-            continue
-
-        if sic_division(row.get("SICCode.SicText_1", "")) == "98":
-            excluded["sic_98_residents_property_mgmt"] += 1
-            continue
-
-        age = age_months(row.get("IncorporationDate", ""))
-        if age is None:
-            excluded["bad_incorporation_date"] += 1
-            continue
-        if age < MIN_AGE_MONTHS:
-            excluded["younger_than_12_months"] += 1
-            continue
-
-        inc_date = row.get("IncorporationDate", "").strip()
-        if int(inc_date[-4:]) < 1800:
-            excluded["older_than_1800"] += 1
+        reason = exclusion_reason(row)
+        if reason:
+            excluded[reason] += 1
             continue
 
         stats["kept"] += 1
+        cat = row.get("Accounts.AccountCategory", "").strip()
         stats["account_category"][cat or "unknown"] += 1
         stats["sic_division"][sic_division(row.get("SICCode.SicText_1", ""))] += 1
         stats["incorporation_decade"][decade(row.get("IncorporationDate", ""))] += 1
