@@ -248,3 +248,30 @@ SEED fix ca oricine sa reproduca aceleasi 300 de firme.
 Am mutat filtrele in config.py pentru ca e folosit si de script-ul de filtrare. Verificarea am facut-o uitandu-ma la numarul de eligibile/grupa raportat de build_sample si population (1.620.885 / 1.452.459 / 113.471 / 645.827), ambele au aceasi populatie.
 
 Rezultatul se afla in data/sample.csv, 300 de firme fara duplicate pe company_number.
+
+[18:32 PM] : discovery_1_website.py -> discovery_web.jsonl
+
+Prima sursa de discovery testata: site-ul propriu al firmei, cu domeniu ghicit din denumire (slug si varianta cu cratime, pe .co.uk/.com/.uk), apoi homepage + /contact + /terms + /about + /privacy, cu regex pe GB+9 cifre si validare de checksum mod-97.
+
+Rezultat pe cele 300 de firme din sample:
+
+  grupa       n   site gasit   VAT gasit
+  small      75    22 (29.3%)   1 (1.3%)
+  medium     75    18 (24.0%)   1 (1.3%)
+  large      75    19 (25.3%)   6 (8.0%)
+  unknown    75    22 (29.3%)   0 (0.0%)
+  TOTAL     300    81 (27.0%)   8 (2.7%)
+
+Toate cele 8 au trecut HMRC si matching-ul nume+cod postal cu firma din Companies House. Zero false pozitive din 8 verificate dar pe 8 cazuri cifra spune putin.
+
+Are sens ca precizia sa fie mare aici, daca o firma isi pune VAT-ul in footer-ul propriului site, e al ei. Falsurile pozitive apar la surse unde numarul e mentionat de altcineva.
+
+Trei observatii:
+
+1. Firmele mari dau de 6 ori mai mult decat restul (8% vs 1.3%). Are sens factureaza B2B si au nevoie sa-si publice VAT-ul. Cifra e slaba (6 din 75), dar directia e clara si e exact raspunsul la intrebarea de business: pentru ce fel de furnizori se poate livra.
+
+2. Rata de gasire a site-ului e aproape identica in toate grupele (24-29%). Asta nu inseamna ca 27% din firme au site. Inseamna ca ghicirea domeniului din denumirea legala functioneaza in 27% din cazuri. Firmele mari au aproape sigur site, dar la un domeniu care nu se deduce din numele legal (brand diferit de denumire). Deci 27% e limita metodei mele, nu prezenta reala a site-urilor.
+
+3. Zero VAT-uri in grupa "unknown". Firmele care nu depun conturi nici nu-si publica   VAT-ul.
+
+In concluzie 2.7% acoperire generala. Sursa asta singura nu construieste datasetul cerut clientul are 40.000 de furnizori si i-ar lipsi in continuare ~97%. Dar ghicirea domeniului e partea slaba: daca as rezolva gasirea site-ului, rata ar creste. De testat separat cat de mult.
