@@ -322,3 +322,30 @@ Filtrul are o limita, acopera doar 4% din populatie (207.983 din 5.17M). Deci ra
 
 In plus cautarea manuala gaseste VAT-uri pe care scriptul meu le-a ratat. JAGEX a iesit la ambele, dar ROTOSOUND, JACKSON ENGINEERING, GILEAD, ARDEN DIES si FACULTATIEVE nu. Deci scriptul pierde pe doua paliere: nu gaseste domeniul (ghicire din denumirea legala, jeukparts.com nu se deduce din JACKSON ENGINEERING UK LTD), si nu cere paginile potrivite. Rata reala de publicare e mai mare decat 2.7% (cat gaseste metoda mea, nu cat exista).
 
+[4:20 PM] : Gasit creditsafe.com.
+
+Cauti dupa numele firmei si returneaza VAT-ul, care s-a dovedit valid la HMRC. Al doilea serviciu comercial care face exact lookup-ul invers pe care enuntul il descrie ca inexistent ("nobody sells it, and there is no dataset to buy"), dupa vat-lookup.co.uk.
+
+De verificat inainte sa ma bazez pe el: ToS, daca cere cont, de unde au datele, si acuratetea testata pe cele 8 VAT-uri pe care le am deja confirmate.
+
+[4:35 PM] Citit ToS-ul Creditsafe. Sursa inchisa:
+
+  6.1.4  screen scraping expres interzis, interzis si accesul "pentru a construi
+         un produs sau serviciu care concureaza cu Serviciile"
+  4.3    interzisa copierea, adaptarea sau crearea de lucrari derivate din datele
+         lor fara permisiune scrisa
+  6.2    acces exclusiv pentru uz intern al companiei, fara revanzare, transfer,
+         distributie sau includere intr-un produs vandut
+  8.3.2  la incheierea abonamentului, obligatia de a sterge toate datele
+         descarcate sau stocate, in orice format
+  4.1    niciun drept de proprietate asupra bazei de date
+
+Clauza 6.1.4 acopera chiar scopul. Veridion ar construi exact un serviciu concurent. Iar 8.3.2 face imposibil un dataset permanent chiar platind abonamentul.
+
+Sursa functioneaza (cauti dupa nume, primesti VAT valid), dar nu poate fi folosita pentru cazul din enunt in nicio forma, nici scrapata, nici cumparata legal ca input pentru un produs revandut.
+
+La fel si vat-lookup.co.uk: "automated scraping... is prohibited" plus "our licences with the primary source do not allow us to give you the information under different terms".
+
+Raspuns la debate topic-ul "care surse nu le-ai folosi intr-un produs pe care il vindem": Creditsafe si vat-lookup. Pentru ca termenii interzic explicit exact utilizarea asta. Le-am folosit doar manual, pe cateva firme, ca sa masor ce acoperire au.
+
+Si o nuanta pentru premisa enuntului ("nobody sells it, and there is no dataset to buy"): datele EXISTA comercial, la cel putin doi furnizori. Nu exista e dreptul de a le reutiliza intr-un produs propriu.
