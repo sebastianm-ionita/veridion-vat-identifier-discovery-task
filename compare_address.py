@@ -1,23 +1,12 @@
 from collections import defaultdict
 import csv, json, re, sys
 from pathlib import Path
-from config import CH_CSV
+from config import CH_CSV, norm_name, norm_postcode
 
 CHECKS = "results/checks.jsonl"
 
 csv.field_size_limit(sys.maxsize)
 
-def norm_name(s: str) -> str:
-    """TESCO PLC / Tesco P.L.C. -> TESCOPLC"""
-    if not s:
-        return ""
-    s = s.upper()
-    s = re.sub(r"\b(LIMITED)\b", "LTD", s)
-    s = re.sub(r"[^A-Z0-9]", "", s)
-    return s
-
-def norm_postcode(s: str) -> str:
-    return re.sub(r"[^A-Z0-9]", "", (s or "").upper())
 
 targets = {}
 for line in Path(CHECKS).read_text().splitlines():

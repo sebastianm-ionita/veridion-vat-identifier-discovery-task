@@ -269,9 +269,56 @@ Are sens ca precizia sa fie mare aici, daca o firma isi pune VAT-ul in footer-ul
 Trei observatii:
 
 1. Firmele mari dau de 6 ori mai mult decat restul (8% vs 1.3%). Are sens factureaza B2B si au nevoie sa-si publice VAT-ul. Cifra e slaba (6 din 75), dar directia e clara si e exact raspunsul la intrebarea de business: pentru ce fel de furnizori se poate livra.
-
 2. Rata de gasire a site-ului e aproape identica in toate grupele (24-29%). Asta nu inseamna ca 27% din firme au site. Inseamna ca ghicirea domeniului din denumirea legala functioneaza in 27% din cazuri. Firmele mari au aproape sigur site, dar la un domeniu care nu se deduce din numele legal (brand diferit de denumire). Deci 27% e limita metodei mele, nu prezenta reala a site-urilor.
 
 3. Zero VAT-uri in grupa "unknown". Firmele care nu depun conturi nici nu-si publica   VAT-ul.
 
 In concluzie 2.7% acoperire generala. Sursa asta singura nu construieste datasetul cerut clientul are 40.000 de furnizori si i-ar lipsi in continuare ~97%. Dar ghicirea domeniului e partea slaba: daca as rezolva gasirea site-ului, rata ar creste. De testat separat cat de mult.
+
+*17 sep*
+
+[3:40 PM] : A doua sursa testata: datele vamale HMRC (uktradeinfo.com), fisiere "Importer details", jan-iun 2026, Open Government Licence v3.0.
+
+Format: tab-separated, 59 campuri fixe. Camp 2 = numele firmei, camp 8 = cod postal, campurile 9-58 = pana la 50 de coduri de marfa. 657.580 de linii in 6 fisiere lunare.
+
+Nu contine VAT. Doar nume, adresa, cod postal, coduri de marfa.
+
+207.983 firme unice (nume+cod postal) din 5.17M firme active = 4% din populatie. Asta e plafonul absolut al sursei.
+
+Suprapunere cu esantionul meu de 300:
+  small      1/75    1.3%
+  medium     2/75    2.7%
+  large     13/75   17.3%
+  unknown    0/75    0.0%
+  TOTAL     16/300   5.3%
+
+Acelasi tipar ca la site-uri, dar mai pronuntat: firmele mari sunt de 13x mai prezente decat cele mici.
+
+JAGEX LIMITED apare in ambele surse, e si firma la care am gasit VAT pe site. Deci sursele se suprapun, nu se aduna, adaugand surse noi lovesc in mare parte aceleasi firme, nu unele noi. Conteaza pentru Part 3, cand estimez cat ar creste acoperirea cu mai multe surse.
+
+Totusi ne foloseste pentru ca firmele care importa au nevoie de EORI, iar pentru cele inregistrate la TVA EORI = GB + VRN + 000. Deci astea 208.000 de firme au aproape sigur VAT. Nu e sursa de discovery, e sursa de prioritizare imi spune unde merita cautat. Pentru clientul din enunt ar fi un filtru: din 40.000 de furnizori, cei care apar aici sunt cei pentru care cautarea are sens.
+
+[4:15 PM] : Am luat toate cele 16 firme care apar si in datele vamale si in esantionul meu, si le-am cautat VAT-ul manual pe site.
+
+Gasit (6):
+  ROTOSOUND MANUFACTURING     terms and conditions   rotosound.com
+  JACKSON ENGINEERING UK      terms and conditions   jeukparts.com
+  JAGEX LIMITED               pe site
+  GILEAD SCIENCES LTD         pe site
+  ARDEN DIES LIMITED          footer                 ardendies.com
+  FACULTATIEVE TECHNOLOGIES   company registration information
+
+Are site dar nu publica VAT (8): FEME, EF CORPORATE EDUCATION, HI-REL LIDS, BRAND FACTORY (doar company number), SENSECO  YSTEMS, FISCAL IOR (doar company number), SACKERS, PHARMARON UK.
+
+Fara site (2): OPTILIGHT, CPL PRODUCTS.
+
+6/16 = 37.5%, fata de 2.7% pe esantionul general de 300.
+
+Deci firmele care importa sunt de ~14x mai probabil sa-si publice VAT-ul. Daca importa, inseamna ca factureaza B2B, deci au nevoie ca partenerii sa le vada VAT-ul.
+
+In concluzie pentru Part 3 nu cauti in toata populatia. Filtrezi intai pe firme care sigur tranzactioneaza, apoi cauti doar acolo. Datele vamale sunt un astfel de filtru, gratuit si sub OGL v3.0. Costul scade drastic in loc de 300 de cautari pentru 8 rezultate, faci 16 pentru 6.
+
+Filtrul are o limita, acopera doar 4% din populatie (207.983 din 5.17M). Deci rata mare pe un segment mic. Pentru clientul cu 40.000 de furnizori, asta ar insemna ~1.600 de firme unde cautarea are sens, din care ~600 gasite. Tot departe de cele 26.000 care ii lipsesc.
+
+In plus cautarea manuala gaseste VAT-uri pe care scriptul meu le-a ratat. JAGEX a iesit la ambele, dar ROTOSOUND, JACKSON ENGINEERING, GILEAD, ARDEN DIES si FACULTATIEVE nu. Deci scriptul pierde pe doua paliere: nu gaseste domeniul (ghicire din denumirea legala, jeukparts.com nu se deduce din JACKSON ENGINEERING UK LTD), si nu cere paginile potrivite. Rata reala de publicare e mai mare decat 2.7% (cat gaseste metoda mea, nu cat exista).
+

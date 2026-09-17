@@ -3,6 +3,7 @@ from dataclasses import dataclass, asdict
 from typing import Optional
 from pathlib import Path
 from datetime import datetime
+import re
 
 # URLS FOR REQUESTS
 BASE = "https://www.tax.service.gov.uk/check-vat-number"
@@ -89,3 +90,16 @@ def exclusion_reason(row: dict) -> str:
 
 def is_eligible(row: dict) -> bool:
     return exclusion_reason(row) is None
+
+
+def norm_name(s: str) -> str:
+    """TESCO PLC / Tesco P.L.C. -> TESCOPLC"""
+    if not s:
+        return ""
+    s = s.upper()
+    s = re.sub(r"\b(LIMITED)\b", "LTD", s)
+    s = re.sub(r"[^A-Z0-9]", "", s)
+    return s
+
+def norm_postcode(s: str) -> str:
+    return re.sub(r"[^A-Z0-9]", "", (s or "").upper())
