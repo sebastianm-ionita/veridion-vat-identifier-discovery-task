@@ -349,3 +349,27 @@ La fel si vat-lookup.co.uk: "automated scraping... is prohibited" plus "our lice
 Raspuns la debate topic-ul "care surse nu le-ai folosi intr-un produs pe care il vindem": Creditsafe si vat-lookup. Pentru ca termenii interzic explicit exact utilizarea asta. Le-am folosit doar manual, pe cateva firme, ca sa masor ce acoperire au.
 
 Si o nuanta pentru premisa enuntului ("nobody sells it, and there is no dataset to buy"): datele EXISTA comercial, la cel putin doi furnizori. Nu exista e dreptul de a le reutiliza intr-un produs propriu.
+
+*18 sep*
+
+[11:15 PM] : Calculat brute force pe checker, are sens doar pentru debate topic.
+
+Un VAT are 9 cifre: 7 de baza + 2 de control. Cele 2 se calculeaza din primele 7, deci nu sunt libere. UK are doua reguli de checksum (cea veche si varianta "9755"), fiecare dand cate o valoare valida.
+
+  10.000.000 combinatii de baza  *  ~2 variante  =  ~20.000.000 numere valide
+
+Din 1 miliard de combinatii posibile, ~2% trec checksum-ul. Filtrul ajuta, dar raman 20 de milioane.
+
+Din alea, doar ~2.28M sunt alocate efectiv, deci ~11% ar fi hit-uri.
+Timp la ritmul meu masurat (2s miss, 4s hit):
+  0.89 x 2s + 0.11 x 4s = 2.22s mediu
+  20.000.000 x 2.22s = 44.400.000 secunde = ~514 zile, non-stop
+
+Fara delay-ul impus, la latenta reala de retea (~0.2s), ar iesi ~53 de zile. Tot enorm, si tot fara paralelizare, pentru ca rezultatul e legat de sesiune.
+
+Dar timpul nu e motivul pentru care nu este o varianta valida. Chiar daca am infrastructura sa o fac:
+- E enumerare, nu verificare. 20 de milioane de cereri automate nu e due diligence, e extragerea bazei lor de date prin interfata de verificare.
+- Rezultatul e dataset-ul cu 2.28M de numere cu nume si adresa, ce HMRC a decis sa nu publice.
+- Traficul constant de pe IP la un serviciu public luni intregi se vede imediat. Prima consecinta e blocarea, a doua e pierderea accesului la API-ul oficial.
+
+Raspunsul la prima intrebare de debate: Da, observatia cu checksum-ul reduce spatiul de la 1 miliard la 20 milioane si nu, nu este o idee buna si nu pentru ca este lent.
