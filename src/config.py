@@ -103,3 +103,18 @@ def norm_name(s: str) -> str:
 
 def norm_postcode(s: str) -> str:
     return re.sub(r"[^A-Z0-9]", "", (s or "").upper())
+
+# VAT
+# VAT cu prefix GB explicit sau 9 cifre precedate de cuvantul VAT
+VAT_PATTERNS = [
+    re.compile(r"\bGB\s?(\d{3})\s?(\d{4})\s?(\d{2})\b", re.I),
+    re.compile(r"VAT[^0-9]{0,40}?(\d{3})\s?(\d{4})\s?(\d{2})\b", re.I),
+]
+
+
+def vat_checksum_ok(vrn: str) -> bool:
+    if len(vrn) != 9 or not vrn.isdigit():
+        return False
+    weights = [8, 7, 6, 5, 4, 3, 2]
+    total = sum(int(vrn[i]) * weights[i] for i in range(7)) + int(vrn[7:9])
+    return total % 97 == 0 or (total + 55) % 97 == 0

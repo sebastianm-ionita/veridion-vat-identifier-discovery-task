@@ -2,6 +2,7 @@ import csv, json, re, time, sys
 from pathlib import Path
 from datetime import datetime, timezone
 import requests
+from config import vat_checksum_ok, VAT_PATTERNS
 
 SAMPLE = Path("data/sample.csv")
 OUT = Path("results/discovery_web.jsonl")
@@ -16,21 +17,6 @@ LEGAL_SUFFIXES = [
     "LIMITED PARTNERSHIP", "LIMITED", "LTD", "PLC", "P.L.C.", "LLP", "L.P.", "LP",
     "C.C.C.", "L.L.C", "LLC", "HOLDINGS", "GROUP",
 ]
-
-# VAT cu prefix GB explicit, sau 9 cifre precedate de cuvantul VAT
-VAT_PATTERNS = [
-    re.compile(r"\bGB\s?(\d{3})\s?(\d{4})\s?(\d{2})\b", re.I),
-    re.compile(r"VAT[^0-9]{0,40}?(\d{3})\s?(\d{4})\s?(\d{2})\b", re.I),
-]
-
-
-def vat_checksum_ok(vrn: str) -> bool:
-    """Mod-97 UK. Verifica-l pe cele 13 VRN-uri deja confirmate la HMRC."""
-    if len(vrn) != 9 or not vrn.isdigit():
-        return False
-    weights = [8, 7, 6, 5, 4, 3, 2]
-    total = sum(int(vrn[i]) * weights[i] for i in range(7)) + int(vrn[7:9])
-    return total % 97 == 0 or (total + 55) % 97 == 0
 
 
 def candidate_domains(name: str):

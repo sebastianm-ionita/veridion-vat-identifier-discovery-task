@@ -352,7 +352,7 @@ Si o nuanta pentru premisa enuntului ("nobody sells it, and there is no dataset 
 
 *18 sep*
 
-[11:15 PM] : Calculat brute force pe checker, are sens doar pentru debate topic.
+[11:15 AM] : Calculat brute force pe checker, are sens doar pentru debate topic.
 
 Un VAT are 9 cifre: 7 de baza + 2 de control. Cele 2 se calculeaza din primele 7, deci nu sunt libere. UK are doua reguli de checksum (cea veche si varianta "9755"), fiecare dand cate o valoare valida.
 
@@ -373,3 +373,77 @@ Dar timpul nu e motivul pentru care nu este o varianta valida. Chiar daca am inf
 - Traficul constant de pe IP la un serviciu public luni intregi se vede imediat. Prima consecinta e blocarea, a doua e pierderea accesului la API-ul oficial.
 
 Raspunsul la prima intrebare de debate: Da, observatia cu checksum-ul reduce spatiul de la 1 miliard la 20 milioane si nu, nu este o idee buna si nu pentru ca este lent.
+
+[1:09 PM] : Am primit 429 dupa ~130 de verificari consecutive. Asta corecteaza ce scrisesem mai devreme, cand concluzionasem pe baza a 10+ verificari ca nu exista rate limiting, pragul e mai sus decat testasem.
+
+Limitarea vine de la CloudFront (x-cache, via, x-amz-cf-pop in headere), nu de la aplicatie. Raspunsul 429 are Content-Length: 0 si nu contine Retry-After, deci nu stiu cat trebuie sa astept verificat cu HEAD pe formular.
+
+Important: 429-ul a lovit pe GET-ul paginii de rezultat, nu pe POST. POST-ul a mers (303 -> /unknown), a doua cerere a fost respinsa.
+
+S-a ridicat in sub ~30 de minute.
+
+Bug descoperit din asta: scriptul nu verifica page.status_code dupa GET pe /known. Cand venea 429, parserul nu gasea nimic si salvam VALID cu nume gol. 80 din 128 de verificari erau asa, verificari esuate inregistrate ca reusite. Le-am sters din checks.jsonl si le reiau.
+
+Alte doua lucruri din headere:
+- x-robots-tag: noindex, nofollow -> al treilea semnal (dupa robots.txt si "personal use and viewing" din ToS) ca serviciul nu e gandit pentru acces automat
+- x-envoy-upstream-service-time: 12 -> aplicatia raspunde in 12ms. Toata latenta pe care am masurat-o e retea si CDN, nu procesare. Conteaza pentru Part 3: limita nu e capacitatea serverului, ci politica de rate limiting.
+
+O sa trec delay-ul de la 2s la 10s.
+
+[2:30 PM] : Blocarea nu s-a ridicat dupa o ora. Prima verificare din fiecare rulare noua trece uneori, apoi 429 imediat. Pare ban pe IP.
+
+Am facut 130 de verificari intr-o zi, la 2-5s distanta, cu user-agent care ma identifica. Asta a fost suficient sa declanseze blocarea.
+
+Cifra pentru Part 3: throughput-ul de validare nu e limitat de capacitateaserverului (x-envoy-upstream-service-time: 12ms), ci de politica de rate limiting a CDN-ului. Un pipeline care ar valida milioane de candidati s-ar lovi de asta imediat, si nu se rezolva cu mai multe masini se rezolva doar cu acces contractual la API-ul oficial, care are propriile limite si propriul scop declarat.
+
+O sa continui verificarea manual, pe un subset, si raportez cifrele pe cate am apucat sa verific.
+
+[3:15 PM] : Am trecut manual prin cele 27 de cazuri pe care euristica le-a marcat NO_MATCH sau PARTIAL. Euristica gresea mult compara slug-ul domeniului cu numele de la HMRC, dar brandul nu seamana cu denumirea legala.
+
+Corecte, desi euristica le-a respins (15):
+  kfh.co.uk                 -> KINLEIGH LTD          (KFH = Kinleigh Folkard & Hayward)
+  topra.org                 -> THE ORGANIS'N FOR PROFES'NLS IN REGULATORY AFFAIRS
+                                                     (TOPRA = acronimul)
+  elliotts.uk               -> ELLIOTT BROTHERS LTD
+  ktgreen-isuzu.co.uk       -> K T GREEN LTD
+  parkersbranded.co.uk      -> PARKERS PROMOTIONAL PRODUCTS LIMITED
+  getmecarfinance.co.uk     -> JIGSAW FINANCE LIMITED
+  hussle.com                -> ARCHWAY FITNESS LIMITED
+  imperialengineering.co.uk -> AWD DWIGHT & SONS (ENGINEERS) LTD
+  ymworks.com               -> YM CORPORATION EUROPE LTD
+  stptrans.com              -> SANDBERG TRANSLATION PARTNERS LTD
+  podsaltusa.com            -> XYFIL LTD
+  funpartysupplies.co.uk    -> FUN IN A BOX LIMITED
+  kent-rugby.org            -> KENT COUNTY RUGBY FOOTBALL UNION
+  theminiskipcompany.co.uk  -> RICHARD HARKNETT
+  greycon.com               -> VESTA SOFTWARE GROUP LIMITED
+
+Gresite (12):
+  boutique-retreats.co.uk   -> CLASSIC COTTAGES LIMITED
+  pearllemoncapital.co.uk   -> PURR TRAFFIC LTD
+  fasten.it                 -> BEARINGNET LIMITED
+  halusky.co.uk             -> JIAAN ENTERPRISES LTD
+  + 8 din tiparul de mai jos
+
+CIFRA REALA DE ATRIBUIRE, dupa verificare manuala:
+  36 corecte din 48 verificabile = 75%
+  12 gresite                     = 25% fals pozitiv
+
+Euristica automata daduse 16%. Diferenta e de 4x, potrivirea pe nume nu merge cand brandul difera de denumirea legala, exact ca la ghicirea domeniului (jeukparts.com vs JACKSON ENGINEERING UK LTD).
+
+[3:40 PM] : Tipar de fals pozitiv, agentia isi lasa propriul VAT in footer-ul site-urilor pe care le construieste pentru clienti.
+
+  cloudwaysapps.com               -> MJ WEB STUDIO LIMITED
+  british-sign.co.uk              -> LISIA DIGITAL LIMITED
+  creative-solutions-direct.co.uk -> BLUEBIRD GRAPHICS LTD
+  everythingliquid.co.uk          -> IBI MEDIA LIMITED
+  securityjournaluk.com           -> CENTURIAN MEDIA LIMITED
+  futurevisuals.co.uk             -> ALL OFFICE LIMITED
+  staging.theaccountancy.co.uk    -> PANDLE LTD
+  staines.able-drainage.co.uk     -> VIABL LTD
+
+8 din cele 12 false pozitive vin de aici. Din cauza template-ului.
+
+E eroarea invizibila din task, numar real, verificat la HMRC, atasat firmei gresite. Daca l-as livra clientului, ar corupe join-ul si nimeni n-ar observa.
+
+Un VAT care apare pe mai multe domenii fara legatura intre ele e suspect. In esantionul meu doar 2 VAT-uri careapar pe domenii diferite, deci semnalul exista dar e slab la volumul asta la scara ar functiona mai bine.

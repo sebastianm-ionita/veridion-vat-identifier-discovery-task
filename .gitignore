@@ -11,3 +11,4 @@ results/raw_html/
 __pycache__/
 *.txt
 sandbox.py
+venv/
