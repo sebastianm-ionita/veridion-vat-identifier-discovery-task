@@ -32,8 +32,27 @@
 **For the customer in the brief:** of 26,000 suppliers missing a VAT number, the website route would recover roughly 700. Prioritising by customs presence would find ~600 of ~1,600 candidates at far lower cost per company. Neither closes the
 gap.
 
-## How to reproduce
+## The problem, restated
 
+The brief asks whether a dataset can be built. Before measuring anything, three properties of the problem determine what "measuring" can even mean.
+
+**The verifier runs backwards.** HMRC will confirm any VAT number you hand it and return the registered name and address. It will not take a company name and give you a number. So verification is an oracle for numbers you already have, never a source of numbers. Every pipeline must therefore produce candidates elsewhere and use HMRC only to confirm them.
+
+**Verification is not a yes/no.** Because the checker returns a name and address, "this number is registered" and "this number belongs to my company" are different questions. A number can pass HMRC and still be wrong for the Companies House row you are trying to enrich. Four outcomes, not two:
+
+| | |
+|---|---|
+| not registered | reject |
+| registered, entity clearly matches | accept |
+| registered, entity clearly does not match | **reject this is the dangerous one** |
+| registered, cannot decide | uncertain |
+
+The third case is where false positives are born, and the fourth is where an honest pipeline has to admit defeat rather than guess. Given that a wrong numberis more expensive than a gap, I reject the uncertain cases and count them separately.
+
+**"Not found" is two different results wearing the same clothes.** With 5.17M active companies and ~2.28M national VAT registrations a figure that includes sole traders who appear nowhere in Companies House fewer than 44% of companies can possibly hold a VAT number, and realistically far fewer. When a search comes back empty, the company may simply not be registered. There is no reference dataset that would let me tell the two apart, which is why this report states precision and deliberately does not state recall.
+
+## How to reproduce
+```
 .
 ├── src/ # all code
 ├── data/
@@ -43,7 +62,7 @@ gap.
 ├── results/ # every number in this report traces to a file here
 ├── fixtures/hmrc/vrn.csv # HMRC sandbox mock VRNs
 └── research-log.md # chronological working notes, written as I went
-
+```
 
 ### Inputs
 
@@ -90,8 +109,101 @@ These are deliberate choices, not tuning knobs, and section 4.1 explains each:
 | Delay between requests | 2s initially, 10s after hitting a rate limit |
 | Concurrency | none  the result lives in the session, not the URL |
 | User-agent | identifies the project and gives a contact address |
-| Caching | every result stored locally; a number is never re-requested |
+| Caching | every result stored locally, a number is never re-requested |
 
 ### Verification status
 
 131 candidates were extracted from Common Crawl. **53 were verified against HMRC** (result in `checks.jsonl`) before the checker began returning 429 and continued to do so for over an hour. The remaining 78 are listed in `commoncrawl_vats.jsonl` but carry no verdict, and no figure in this report is computed from them. Section 4.1 treats the rate limit as a finding rather than an obstacle.
+
+## Part 1 Research
+
+### Verification is the bottleneck, not discovery
+
+I expected the hard part to be finding numbers. It is, but verification turned out to be the binding constraint on everything downstream, so it is worth establishing first: it determines what can be measured at all, and it is where I spent the first two days.
+
+#### The official route is closed for this purpose
+
+HMRC's Check a UK VAT Number API v2.0 is the sanctioned way to verify programmatically. Version 1 was withdrawn in February 2025 and v2 sits behind OAuth 2.0. Production credentials take roughly two weeks to approve and require passing a terms-of-use questionnaire that asks for an organisation URL, evidence of registration, a privacy policy, terms and conditions, penetration testing results, and WCAG AA conformance.
+
+None of that applies to a developer with no product, no customers and no user data. But the deeper mismatch is the stated scope: the API exists **"for the sole purpose of allowing traders to do due diligence on VAT-registered businesses."** Bulk-validating automatically discovered candidates to build a dataset is not that, whichever HTTP call it makes.
+
+I registered for sandbox access and built a working client against it. The sandbox accepts only the fictitious VRNs shipped in `vrn.csv` confirmed rather than assumed, since one of them (553557881) returns `/unknown` on the live service. So the sandbox can exercise code but cannot validate a single real discovery.
+
+**Decision: I did not pursue production access.** Not because of the two-week timeline, but because my purpose does not fall within the purpose the API is offered for. That is a decision I would make the same way with a month to spare.
+
+#### What I used instead, and on what basis
+
+The public checker at `gov.uk/check-uk-vat-number` verifies real numbers with no authentication. Before automating anything against it I checked what the service says about automated access:
+
+| | |
+|---|---|
+| `www.gov.uk/robots.txt` | Disallows only `/*/print$` and `/search/all*`. Named blocks on `deepcrawl` and `MS Search 6.0`, both annotated in the file as making too many requests. `Crawl-delay: 10` for AhrefsBot. |
+| `www.tax.service.gov.uk/robots.txt` | 404 no file, no directives |
+| Terms and conditions (last updated April 2005) | *"Our website is maintained for your personal use and viewing"*, *"in a manner that does not restrict or inhibit the use and enjoyment of this site by any third party"*. No mention of scraping, automation, bulk or systematic access. |
+| Response headers | `x-robots-tag: noindex, nofollow` |
+
+Two things follow. First, nothing explicitly prohibits automated access, and the only documented concern visible in which bots are blocked and why is **volume**, not method. Second, "personal use and viewing" is the restrictive phrase, and it predates the checker by well over a decade.
+
+So: a few hundred checks at a deliberate pace, for a technical evaluation, sits comfortably inside reasonable use. A commercial product continuously validating against this endpoint does not, and I would not build one on it. That answers one of the debate topics, and section 7 returns to it.
+
+#### How the service actually works
+
+| | |
+|---|---|
+| Request | `POST /check-vat-number/enter-vat-details` with `csrfToken`, `target`, `requester` |
+| Response | `303 See Other` |
+| Verdict | Read from the `Location` header: `/known` or `/unknown` |
+| Session | CSRF token is reusable for the session one GET up front, then one POST per check |
+| Caching | `Cache-Control: no-cache, no-store` every check reaches the server |
+
+Three consequences shaped the client:
+
+**The verdict is in the redirect, not the page.** With `allow_redirects=False` a
+negative result costs one request and a positive result two. Parsing is needed
+only for the name and address. If the page layout changes, verdict extraction
+does not break.
+
+**The result lives in the session, not the URL.** `/known` is a fixed path with
+no VRN in it. Two concurrent requests on one session would overwrite each other's
+result which is how a number gets attached to the wrong company. So: strictly
+sequential, and the parser cross-checks the VRN displayed on the result page
+against the one requested, raising rather than returning on mismatch.
+
+**A script is lighter than a browser.** A human check loads 10 requests and
+~10.7 kB CSS, JavaScript, fonts, Google Tag Manager, an SVG. The client makes
+one or two and executes no JavaScript, so it also fires no analytics events and
+does not distort the service's own usage figures.
+
+#### Access parameters
+
+| | |
+|---|---|
+| Delay | 2s between requests, raised to 10s after the rate limit was hit |
+| Concurrency | None |
+| User-agent | `vat-identifier-discovery/0.1 (contact: …)` |
+| Caching | Every result persisted locally, no number requested twice |
+
+The user-agent is the one worth defending. If someone at HMRC looks at their logs and sees unusual traffic, they should be able to tell immediately what it is and who to contact. A user-agent imitating Chrome would be an attempt to hide and if hiding were the correct choice, the activity would not be appropriate in the first place.
+
+#### The rate limit, and why it is a finding
+
+After roughly 130 checks in one day, the service returned `429 Too Many Requests`. It kept returning it for over an hour, including on fresh sessions.
+
+| observation | |
+|---|---|
+| Source | CloudFront (`x-cache`, `via`, `x-amz-cf-pop`) CDN, not the application |
+| `Retry-After` | Absent. `Content-Length: 0`. Checked with a HEAD request. |
+| Which request failed | The GET for the result page, not the POST |
+| Application latency | `x-envoy-upstream-service-time: 12` the service answers in 12ms |
+
+The last row is the important one. The limit has nothing to do with server capacity. It is policy, applied at the edge, and **it does not yield to more machines, more bandwidth or more parallelism.** Any pipeline that needs to validate millions of candidates runs into it immediately, and the only way through is contractual access to the official API which carries its own limits and its own declared purpose.
+
+That closes a loop with the brute-force debate topic: the reason enumeration is infeasible is not arithmetic, it is that the service will not serve it.
+
+#### One bug worth reporting
+
+The rate limit exposed a fault in my own code. The client checked the redirect but not the status of the result-page GET. When a 429 arrived, the parser found nothing and the record was written as `VALID` with an empty name **80 of 128 checks were failures recorded as successes.**
+
+I deleted them and re-ran. The fix was to treat a missing name on a `/known` page as an error rather than a result, and to separate `ERROR` from `UNKNOWN` throughout, so that a network failure can never be counted as "this company is not registered". `ERROR` is retried on a later run, `UNKNOWN` is cached as an answer.
+
+This is the class of bug that silently degrades a dataset: nothing crashed, nothing looked wrong, and the numbers would have been quietly false.
