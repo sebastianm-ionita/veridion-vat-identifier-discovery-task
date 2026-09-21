@@ -642,12 +642,13 @@ Confidence intervals are Wilson score intervals. They are wide, and they are the
 
 rate = sum over bands of (companies in band x band rate) / all companies
 
+```
    1,620,885 x 1/75  +  1,452,459 x 1/75  +  113,471 x 6/75  +  645,827 x 0
  = -----------------------------------------------------------------------
                               3,832,642
 
  = 1.3%
-
+```
 
 | population | estimated rate |
 |---|---|
@@ -962,5 +963,5 @@ I have not established which countries fall in the third group. For Spain, the o
 
 ### Sources for this section
 
-- German Digital Services Act, Section 5: https://www.gesetze-im-internet.de/ddg/__5.html
-- VIES, European Commission: https://taxation-customs.ec.europa.eu/vies-vat-information-exchange-system_en
+- German Digital Services Act, Section 5 (official text): https://www.gesetze-im-internet.de/ddg/__5.html
+- French VAT key formula and legal basis: https://hayot-expertise.fr/en/blog/french-tax-identification-number-2026-nif-siren-vat
