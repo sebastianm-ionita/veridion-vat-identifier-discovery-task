@@ -447,3 +447,28 @@ Euristica automata daduse 16%. Diferenta e de 4x, potrivirea pe nume nu merge ca
 E eroarea invizibila din task, numar real, verificat la HMRC, atasat firmei gresite. Daca l-as livra clientului, ar corupe join-ul si nimeni n-ar observa.
 
 Un VAT care apare pe mai multe domenii fara legatura intre ele e suspect. In esantionul meu doar 2 VAT-uri careapar pe domenii diferite, deci semnalul exista dar e slab la volumul asta la scara ar functiona mai bine.
+
+*18 sep (adaugat pe 22 sep, nu notasem la momentul respectiv)*
+
+[~11:30 AM] : A treia sursa: Common Crawl, crawl CC-MAIN-2026-34. Descarcat wet.paths.gz (100.000 de fisiere WET) si primele 5 fisiere, ~64 MB fiecare. Rulat discovery_3_commoncrawl.py cu acelasi regex si checksum ca la site-uri:
+  pagini procesate:     104.282
+  pagini .uk:           2.166 (2.1%)
+  aparitii VAT:         197
+  VAT-uri unice:        131
+  pe mai multe domenii: 2
+Cam 1 VAT unic la 800 de pagini. Inmultit cu 20.000 iese ~2.6M, ordinul de marime al tuturor inregistrarilor VAT din UK, dar e limita de sus, la tot crawl-ul multe s-ar repeta. Paginile .uk sunt 2.1% din total dar dau 59% din aparitii.
+
+Am inversat pipeline-ul: nu mai caut VAT-ul unei firme, iau VAT-urile de pe web si HMRC imi spune al cui e fiecare.
+
+[~11:50 AM] : Verificat toate cele 131 la HMRC. 128 inregistrate (97.7%), 3 nu. Checksum-ul face aproape toata treaba. Euristica automata domeniu vs nume HMRC a dat doar 16% potriviri, de aici review-ul manual de la 3:15 PM.
+
+*21 sep*
+
+[10:10 AM] : Masurat timpul pe Common Crawl cu `time`: 5 fisiere in 17 secunde, CPU-bound. Scalat la 100.000 de fisiere: ~94 de ore-nucleu, cativa dolari. Procesarea e neglijabila; costul real e citirea celor 6.4 TB.
+
+[10:20 AM] : Corectii la intrari anterioare:
+- 15 sep [2:50 PM]: 2.73M e cifra pentru VAT si/sau PAYE, nu doar VAT. Corect e ~2.28M, deci plafonul e 44%, nu 52%.
+- 15 sep [7:40 PM]: dupa filtru au ramas 3.832.642, nu 3.832.677. Am mai exclus 35 de firme cu data de infiintare inainte de 1800.
+- 17 sep [3:40 PM] si [4:15 PM]: ARDEN DIES a fost gasit si de script, nu doar JAGEX. Scriptul a gasit 2 din cele 6, nu 1.
+- 18 sep [11:15 AM]: numarate exact, 20.615.843 numere trec checksum-ul, nu ~20M. La ritmul meu iese 530 de zile, nu 514.
+- 18 sep [1:09 PM]: VALID-urile celor 80 erau corecte, verdictul vine din redirect. Lipsea doar numele. Prima rulare e pastrata in results/old_checks.jsonl.

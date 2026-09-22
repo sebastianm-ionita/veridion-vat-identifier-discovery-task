@@ -1,8 +1,8 @@
-# UK Company VAT Discovery  feasibility study
+# UK Company VAT Discovery: feasibility study
 
-**Question:** can a UK company → VAT number dataset be built from the open web?
+**Question:** can a dataset mapping UK companies to their VAT numbers be built from the open web?
 
-**Answer:** partially, and not at a coverage that solves the customer's problem. The limiting factor is not crawling. It is that most UK companies never publish their VAT number anywhere, and that verification, the only step that can tell you whether a number belongs to the right company is rate-limited by policy, not by capacity.
+**Answer:** partially, and not at a coverage that solves the customer's problem. The limiting factor is not crawling. It is that most UK companies never publish their VAT number anywhere, and that verification, the only step that can tell you whether a number belongs to the right company, is rate-limited by policy, not by capacity.
 
 ## 1. Summary
 
@@ -10,27 +10,26 @@
 |---|---|
 | Active companies in Companies House (2026-09 snapshot) | 5,171,600 |
 | UK VAT registrations nationally (incl. sole traders) | ~2.28M |
-| Theoretical ceiling: companies that could have a VAT number | ≤44% |
-| Target population after filtering | 3,832,677 |
+| Theoretical ceiling: companies that could have a VAT number | at most 44% |
+| Target population after filtering | 3,832,642 |
 | Sample | 300, stratified, 75 per size band |
 
-**Source A  company websites.** Domain guessed from the legal name, then homepage + /contact + /terms + /about scraped for a checksum-valid VAT pattern. **8 of 300 (2.7%)**, all 8 confirmed against HMRC and matched to the right Companies House record. Zero false positives out of 8. Rate varies 6× by company size: 8.0% for large, 1.3% for small, 0% for companies that file no accounts.
+**Source A: company websites.** Domain guessed from the legal name, then homepage + /contact + /terms + /about scraped for a checksum-valid VAT pattern. **8 of 300 (2.7%)**, all 8 confirmed against HMRC and matched to the right Companies House record. Zero false positives out of 8. Rate varies 6x by company size: 8.0% for large, 1.3% for small, 0% for companies that file no accounts.
 
-**Source B  HMRC customs data.** 207,983 unique importers (4% of the population), name and postcode only, no VAT numbers. Not a discovery source, a **prioritisation** source. Of the 16 sample companies that appear in it, **6 publish their VAT (37.5%)**, against 2.7% for the sample at large. Filtering before searching raises the hit rate by an order of magnitude, on 4% of the population.
+**Source B: HMRC customs data.** 207,983 unique importers (4% of the population), name and postcode only, no VAT numbers. Not a discovery source, a **prioritisation** source. Of the 16 sample companies that appear in it, **6 publish their VAT (37.5%)**, against 2.7% for the sample at large. Filtering before searching raises the hit rate by an order of magnitude, on 4% of the population.
 
-**Source C  Common Crawl.** 104,282 pages of extracted text yielded 131 unique checksum-valid VAT numbers  roughly **1 per 800 pages**. Extrapolated across the crawl's 100,000 WET files, the order of magnitude is comparable to the entire national VAT population. Regex precision against HMRC: **97.7%**. Attribution precision, after manual review: **75%**  one in four numbers belongs to someone other than the site it was found on.
+**Source C: Common Crawl.** 104,282 pages of extracted text yielded 131 unique checksum-valid VAT numbers, roughly **1 per 800 pages**. Extrapolated across the crawl's 100,000 WET files, the order of magnitude is comparable to the entire national VAT population. Regex precision against HMRC: **97.7%**. Attribution precision, after manual review: **75%**, so one in four numbers belongs to someone other than the site it was found on.
 
-**Source D  commercial aggregators.** Two services (Creditsafe, vat-lookup.co.uk) do exactly the reverse lookup the brief describes as non-existent. Both prohibit automated extraction Creditsafe's terms additionally forbid using the data to build a competing service and require deletion on termination. The data exists. The right to redistribute it does not.
+**Source D: commercial aggregators.** Two services (Creditsafe, vat-lookup.co.uk) do exactly the reverse lookup the brief describes as non-existent. Both prohibit automated extraction, and Creditsafe's terms additionally forbid using the data to build a competing service and require deletion on termination. The data exists. The right to redistribute it does not.
 
-## What I'd flag before promising this to a customer
+### What I'd flag before promising this to a customer
 
-1. **Verification is the bottleneck, not discovery.** After ~130 checks in one day, at 2–5s intervals, with an identifying user-agent, the public checker returned 429 and kept returning it for over an hour. The application itself answers in 12ms the limit is CDN policy. More machines do not fix this.
+1. **Verification is the bottleneck, not discovery.** After ~130 checks in one day, at 2-5s intervals, with an identifying user-agent, the public checker returned 429 and kept returning it for over an hour. The application itself answers in 12ms; the limit is CDN policy. More machines do not fix this.
 2. **A quarter of web-harvested numbers are attributed to the wrong company**, and the largest single cause is systematic: web agencies leave their own VAT in the footer of sites they build for clients. 8 of my 12 false positives.
 3. **"Not found" is ambiguous and stays ambiguous.** There is no way to separate "this company has no VAT number" from "I failed to find it", so recall cannot be reported honestly. Only precision can.
 4. **The mapping is not one-to-one.** VAT group registrations mean one number can cover several companies, and sole traders hold VAT numbers that will never match a Companies House row.
 
-**For the customer in the brief:** of 26,000 suppliers missing a VAT number, the website route would recover roughly 700. Prioritising by customs presence would find ~600 of ~1,600 candidates at far lower cost per company. Neither closes the
-gap.
+**For the customer in the brief:** of 26,000 suppliers missing a VAT number, the website route would recover between roughly 340 and 700, depending on how the supplier mix compares with the population (section 5.3). Prioritising by customs presence would find ~600 of ~1,600 candidates at far lower cost per company. Neither closes the gap.
 
 ## 2. The problem, restated
 
@@ -44,39 +43,39 @@ The brief asks whether a dataset can be built. Before measuring anything, three 
 |---|---|
 | not registered | reject |
 | registered, entity clearly matches | accept |
-| registered, entity clearly does not match | **reject this is the dangerous one** |
+| registered, entity clearly does not match | **reject: this is the dangerous one** |
 | registered, cannot decide | uncertain |
 
-The third case is where false positives are born, and the fourth is where an honest pipeline has to admit defeat rather than guess. Given that a wrong numberis more expensive than a gap, I reject the uncertain cases and count them separately.
+The third case is where false positives are born, and the fourth is where an honest pipeline has to admit defeat rather than guess. Given that a wrong number is more expensive than a gap, I reject the uncertain cases and count them separately.
 
-**"Not found" is two different results wearing the same clothes.** With 5.17M active companies and ~2.28M national VAT registrations a figure that includes sole traders who appear nowhere in Companies House fewer than 44% of companies can possibly hold a VAT number, and realistically far fewer. When a search comes back empty, the company may simply not be registered. There is no reference dataset that would let me tell the two apart, which is why this report states precision and deliberately does not state recall.
+**"Not found" is two different results wearing the same clothes.** With 5.17M active companies and ~2.28M national VAT registrations, a figure that includes sole traders who appear nowhere in Companies House, fewer than 44% of companies can possibly hold a VAT number, and realistically far fewer. When a search comes back empty, the company may simply not be registered. There is no reference dataset that would let me tell the two apart, which is why this report states precision and deliberately does not state recall.
 
 ## 3. How to reproduce
 ```
 .
-├── src/ # all code
-├── data/
-│ ├── MANIFEST.md # source files: URL, download date, sha256, row count
-│ ├── raw/ # gitignored  re-downloadable inputs
-│ └── sample.csv # the 300 companies this report measures (committed)
-├── results/ # every number in this report traces to a file here
-├── fixtures/hmrc/vrn.csv # HMRC sandbox mock VRNs
-└── research-log.md # chronological working notes, written as I went
+|-- src/                    # all code
+|-- data/
+|   |-- MANIFEST.md         # source files: URL, download date, sha256, row count
+|   |-- raw/                # gitignored, re-downloadable inputs
+|   `-- sample.csv          # the 300 companies this report measures (committed)
+|-- results/                # every number in this report traces to a file here
+|-- fixtures/hmrc/vrn.csv   # HMRC sandbox mock VRNs
+`-- research-log.md         # chronological working notes, written as I went
 ```
 
 ### Inputs
 
-Not committed they are large and re-downloadable. `data/MANIFEST.md` records the exact URL, download timestamp, sha256 and row count for each, because every figure below is tied to a specific snapshot.
+Not committed: they are large and re-downloadable. `data/MANIFEST.md` records the exact URL, download timestamp, sha256 and row count for each, because every figure below is tied to a specific snapshot.
 
 | source | licence | what it is |
 |---|---|---|
 | Companies House basic company data, 2026-09-01 | Open Government Licence v3.0 | 5.69M rows, all live UK companies |
-| HMRC `uktradeinfo` importer details, Jan–Jun 2026 | Open Government Licence v3.0 | 657,580 rows, importer names and postcodes |
+| HMRC `uktradeinfo` importer details, Jan-Jun 2026 | Open Government Licence v3.0 | 657,580 rows, importer names and postcodes |
 | Common Crawl CC-MAIN-2026-34, 5 of 100,000 WET files | - | 104,282 pages of extracted text |
 
 ### Pipeline
 
-Run in order. Each step writes to `results/` and is resumable re-running skips what is already cached.
+Run in order. Each step writes to `results/` and is resumable: re-running skips what is already cached.
 
 | # | script | produces | what it does |
 |---|---|---|---|
@@ -89,13 +88,13 @@ Run in order. Each step writes to `results/` and is resumable re-running skips w
 | 7 | `discovery_3_commoncrawl.py` | `commoncrawl_vats.jsonl` | Harvests VAT candidates from Common Crawl text, recording the URL each came from |
 | 8 | `checker.py` | `checks.jsonl` | Verifies candidates against HMRC and stores the registered name and address |
 | 9 | `compare_url_with_company.py` | stdout | Measures regex precision and attribution precision for the Common Crawl route |
-|  | `compare_address.py` | stdout | Compares HMRC-returned addresses against Companies House records |
+| - | `compare_address.py` | stdout | Compares HMRC-returned addresses against Companies House records |
 
 ### Shared modules
 
 | module | responsibility |
 |---|---|
-| `config.py` | Constants, the `CheckResult` type, and the population filter shared by steps 3 and 4 so the sample can never drift from the population it was drawn from |
+| `config.py` | Constants, the `CheckResult` type, and the population filter, shared by steps 3 and 4 so the sample can never drift from the population it was drawn from |
 | `hmrc_checker.py` | One verification: session, CSRF token, POST, verdict from the redirect `Location` |
 | `html_parser.py` | Extracts the registered name, address and postcode from a result page |
 | `html_storage.py` | Saves raw HTML and maintains the local result cache |
@@ -107,15 +106,25 @@ These are deliberate choices, not tuning knobs, and section 4.1 explains each:
 | | |
 |---|---|
 | Delay between requests | 2s initially, 10s after hitting a rate limit |
-| Concurrency | none  the result lives in the session, not the URL |
+| Concurrency | none: the result lives in the session, not the URL |
 | User-agent | identifies the project and gives a contact address |
-| Caching | every result stored locally, a number is never re-requested |
+| Caching | every result stored locally; a number is never re-requested |
 
 ### Verification status
 
-131 candidates were extracted from Common Crawl. **53 were verified against HMRC** (result in `checks.jsonl`) before the checker began returning 429 and continued to do so for over an hour. The remaining 78 are listed in `commoncrawl_vats.jsonl` but carry no verdict, and no figure in this report is computed from them. Section 4.1 treats the rate limit as a finding rather than an obstacle.
+All 131 candidates harvested from Common Crawl received a verdict from HMRC,
+read from the redirect: 128 registered, 3 not. For 80 of the 128, the follow-up
+request for the registered name hit the rate limit, so their verdict is known
+but their name is not (section 4.1). The first run, with those verdicts, is kept
+in `results/old_checks.jsonl`.
 
-## 4. Part 1 Research
+Names were retrieved for 48 numbers when the attribution analysis in 4.5 was
+run, and every attribution figure in this report is computed on those 48. The
+rate limit then blocked the re-run for over an hour. I report the numbers as
+they stood rather than wait for a complete set, and section 4.1 treats the rate
+limit as a finding rather than an obstacle.
+
+## 4. Part 1 - Research
 
 ### 4.1 Verification is the bottleneck, not discovery
 
@@ -127,7 +136,7 @@ HMRC's Check a UK VAT Number API v2.0 is the sanctioned way to verify programmat
 
 None of that applies to a developer with no product, no customers and no user data. But the deeper mismatch is the stated scope: the API exists **"for the sole purpose of allowing traders to do due diligence on VAT-registered businesses."** Bulk-validating automatically discovered candidates to build a dataset is not that, whichever HTTP call it makes.
 
-I registered for sandbox access and built a working client against it. The sandbox accepts only the fictitious VRNs shipped in `vrn.csv` confirmed rather than assumed, since one of them (553557881) returns `/unknown` on the live service. So the sandbox can exercise code but cannot validate a single real discovery.
+I registered for sandbox access and built a working client against it. The sandbox accepts only the fictitious VRNs shipped in `vrn.csv`. That is confirmed rather than assumed: one of them (553557881) returns `/unknown` on the live service. So the sandbox can exercise code but cannot validate a single real discovery.
 
 **Decision: I did not pursue production access.** Not because of the two-week timeline, but because my purpose does not fall within the purpose the API is offered for. That is a decision I would make the same way with a month to spare.
 
@@ -138,11 +147,11 @@ The public checker at `gov.uk/check-uk-vat-number` verifies real numbers with no
 | | |
 |---|---|
 | `www.gov.uk/robots.txt` | Disallows only `/*/print$` and `/search/all*`. Named blocks on `deepcrawl` and `MS Search 6.0`, both annotated in the file as making too many requests. `Crawl-delay: 10` for AhrefsBot. |
-| `www.tax.service.gov.uk/robots.txt` | 404 no file, no directives |
+| `www.tax.service.gov.uk/robots.txt` | 404: no file, no directives |
 | Terms and conditions (last updated April 2005) | *"Our website is maintained for your personal use and viewing"*, *"in a manner that does not restrict or inhibit the use and enjoyment of this site by any third party"*. No mention of scraping, automation, bulk or systematic access. |
 | Response headers | `x-robots-tag: noindex, nofollow` |
 
-Two things follow. First, nothing explicitly prohibits automated access, and the only documented concern visible in which bots are blocked and why is **volume**, not method. Second, "personal use and viewing" is the restrictive phrase, and it predates the checker by well over a decade.
+Two things follow. First, nothing explicitly prohibits automated access, and the only documented concern, visible in which bots are blocked and why, is **volume**, not method. Second, "personal use and viewing" is the restrictive phrase, and it predates the checker by well over a decade.
 
 So: a few hundred checks at a deliberate pace, for a technical evaluation, sits comfortably inside reasonable use. A commercial product continuously validating against this endpoint does not, and I would not build one on it. That answers one of the debate topics, and section 7 returns to it.
 
@@ -153,8 +162,8 @@ So: a few hundred checks at a deliberate pace, for a technical evaluation, sits 
 | Request | `POST /check-vat-number/enter-vat-details` with `csrfToken`, `target`, `requester` |
 | Response | `303 See Other` |
 | Verdict | Read from the `Location` header: `/known` or `/unknown` |
-| Session | CSRF token is reusable for the session one GET up front, then one POST per check |
-| Caching | `Cache-Control: no-cache, no-store` every check reaches the server |
+| Session | CSRF token is reusable for the session: one GET up front, then one POST per check |
+| Caching | `Cache-Control: no-cache, no-store`: every check reaches the server |
 
 Three consequences shaped the client:
 
@@ -165,12 +174,12 @@ does not break.
 
 **The result lives in the session, not the URL.** `/known` is a fixed path with
 no VRN in it. Two concurrent requests on one session would overwrite each other's
-result which is how a number gets attached to the wrong company. So: strictly
+result, which is how a number gets attached to the wrong company. So: strictly
 sequential, and the parser cross-checks the VRN displayed on the result page
 against the one requested, raising rather than returning on mismatch.
 
 **A script is lighter than a browser.** A human check loads 10 requests and
-~10.7 kB CSS, JavaScript, fonts, Google Tag Manager, an SVG. The client makes
+~10.7 kB: CSS, JavaScript, fonts, Google Tag Manager, an SVG. The client makes
 one or two and executes no JavaScript, so it also fires no analytics events and
 does not distort the service's own usage figures.
 
@@ -180,10 +189,10 @@ does not distort the service's own usage figures.
 |---|---|
 | Delay | 2s between requests, raised to 10s after the rate limit was hit |
 | Concurrency | None |
-| User-agent | `vat-identifier-discovery/0.1 (contact: …)` |
-| Caching | Every result persisted locally, no number requested twice |
+| User-agent | `vat-identifier-discovery/0.1 (contact: sebi.ionita23@gmail.com)` |
+| Caching | Every result persisted locally; no number requested twice |
 
-The user-agent is the one worth defending. If someone at HMRC looks at their logs and sees unusual traffic, they should be able to tell immediately what it is and who to contact. A user-agent imitating Chrome would be an attempt to hide and if hiding were the correct choice, the activity would not be appropriate in the first place.
+The user-agent is the one worth defending. If someone at HMRC looks at their logs and sees unusual traffic, they should be able to tell immediately what it is and who to contact. A user-agent imitating Chrome would be an attempt to hide, and if hiding were the correct choice, the activity would not be appropriate in the first place.
 
 #### The rate limit, and why it is a finding
 
@@ -191,20 +200,30 @@ After roughly 130 checks in one day, the service returned `429 Too Many Requests
 
 | observation | |
 |---|---|
-| Source | CloudFront (`x-cache`, `via`, `x-amz-cf-pop`) CDN, not the application |
+| Source | CloudFront (`x-cache`, `via`, `x-amz-cf-pop`): CDN, not the application |
 | `Retry-After` | Absent. `Content-Length: 0`. Checked with a HEAD request. |
 | Which request failed | The GET for the result page, not the POST |
-| Application latency | `x-envoy-upstream-service-time: 12` the service answers in 12ms |
+| Application latency | `x-envoy-upstream-service-time: 12`: the service answers in 12ms |
 
-The last row is the important one. The limit has nothing to do with server capacity. It is policy, applied at the edge, and **it does not yield to more machines, more bandwidth or more parallelism.** Any pipeline that needs to validate millions of candidates runs into it immediately, and the only way through is contractual access to the official API which carries its own limits and its own declared purpose.
+The last row is the important one. The limit has nothing to do with server capacity. It is policy, applied at the edge, and **it does not yield to more machines, more bandwidth or more parallelism.** Any pipeline that needs to validate millions of candidates runs into it immediately, and the only way through is contractual access to the official API, which carries its own limits and its own declared purpose.
 
 That closes a loop with the brute-force debate topic: the reason enumeration is infeasible is not arithmetic, it is that the service will not serve it.
 
 #### One bug worth reporting
 
-The rate limit exposed a fault in my own code. The client checked the redirect but not the status of the result-page GET. When a 429 arrived, the parser found nothing and the record was written as `VALID` with an empty name **80 of 128 checks were failures recorded as successes.**
+The rate limit exposed a fault in my own code. The client read the verdict from
+the redirect correctly, but did not check the status of the follow-up request for
+the result page. When that request got a 429, the parser found nothing and the
+record was written as a complete `VALID` result with an empty name. **80 of 128
+records looked complete while missing the one field attribution depends on.**
+The verdicts were right; the records were not.
 
-I deleted them and re-ran. The fix was to treat a missing name on a `/known` page as an error rather than a result, and to separate `ERROR` from `UNKNOWN` throughout, so that a network failure can never be counted as "this company is not registered". `ERROR` is retried on a later run, `UNKNOWN` is cached as an answer.
+The fix was to treat a missing name on a `/known` page as an error rather than a
+result, and to separate `ERROR` from `UNKNOWN` throughout, so that a network
+failure can never be counted as "this company is not registered". `ERROR` is
+retried on a later run; `UNKNOWN` is cached as an answer. I removed the
+incomplete records from `checks.jsonl`, kept the first run in
+`results/old_checks.jsonl` as the evidence for the verdicts, and re-ran.
 
 This is the class of bug that silently degrades a dataset: nothing crashed, nothing looked wrong, and the numbers would have been quietly false.
 
@@ -235,6 +254,7 @@ The accounts filing category is the only size signal in the file. The legal thre
 Four categories hold 93% of active companies. Dormant companies do not trade by definition. Companies with no accounts filed are largely newly incorporated or never started trading.
 
 By incorporation date, 55% of active companies (2,854,461) were formed in the 2020s, and 83% in the last 16 years.
+
 No SIC division dominates: the largest, 68 (real estate), holds 12%. 216,320 companies have no SIC code at all.
 
 A sample drawn uniformly from 5.17M would be dominated by micro, dormant and very young companies, most of which structurally cannot hold a VAT number. Section 5.1 covers how I handled that.
@@ -260,7 +280,7 @@ I had guessed both were dormancy markers. Half right. 99999 is one. 98000 is not
 This came up repeatedly, and it matters because the whole method depends on matching against these sources:
 
 - **Impossible incorporation dates.** Active companies dated to the 1320s, 1410s and 1500s. Companies House was established in 1844.
-- **Inconsistent code formats.** The same SIC activity appears in 4-digit ad 5-digit form (99999 and 9999, 98000 and 9800).
+- **Inconsistent code formats.** The same SIC activity appears in 4-digit and 5-digit form (99999 and 9999, 98000 and 9800).
 - **Contradictory fields.** The 27,482 companies above.
 - **Typos in HMRC's own records.** The address returned for BP International reads "CHERSTEY ROAD". The road is Chertsey Road.
 
@@ -269,7 +289,7 @@ None of these is large. Together they mean no source can be treated as ground tr
 
 ### 4.3 Source A: company websites
 
-The obvious route, and the one the brief anticipates when it notes that some contexts legally require a VAT number to be published. UK electronic commerceregulations require online service providers to make their VAT number easily accessible, which is why it turns up in footers and terms pages.
+The obvious route, and the one the brief anticipates when it notes that some contexts legally require a VAT number to be published. UK electronic commerce regulations require online service providers to make their VAT number easily accessible, which is why it turns up in footers and terms pages.
 
 **Method.** For each of the 300 sample companies:
 
@@ -382,7 +402,7 @@ The inversion matters because HMRC returns the registered name for every valid n
 
 **Density: about one unique number per 800 pages.** The crawl lists 100,000 WET files, so scaling by 20,000 gives roughly 2.6M. That is an upper bound, since a full run would collapse numbers repeated across files, but the order of magnitude matches the national VAT population. It is the first result in this study suggesting the dataset might be buildable from the open web.
 
-**Where the numbers come from.** 2.1% of pages are on `. uk` domains, but they produce 59% of occurrences. Filtering to `.uk` would process 2% of the data for most of the yield, and would also drop UK companies on `.com` domains.
+**Where the numbers come from.** 2.1% of pages are on `.uk` domains, but they produce 59% of occurrences. Filtering to `.uk` would process 2% of the data for most of the yield, and would also drop UK companies on `.com` domains.
 
 #### Regex precision
 
@@ -453,7 +473,7 @@ The other 4 wrong attributions have no shared pattern:
 
 #### What else the names revealed
 
-- **Sole traders.** RICHARD HARKNETT (`theminiskipcompany.co.uk`) and ELAINE   ELIZABETH GLEAVE, LUKE GRAHAM GLEAVE are individuals, not companies. The  attribution is correct, but they will never match a Companies House row. This is the gap between the national VAT figure and the company population, made concrete.
+- **Sole traders.** RICHARD HARKNETT (`theminiskipcompany.co.uk`) and ELAINE ELIZABETH GLEAVE, LUKE GRAHAM GLEAVE are individuals, not companies. The attribution is correct, but they will never match a Companies House row. This is the gap between the national VAT figure and the company population, made concrete.
 - **Group registrations.** `greycon.com` returns VESTA SOFTWARE GROUP LIMITED, likely a VAT group registration where one number covers several companies. Correct at group level, but a name and postcode match against the subsidiary's own Companies House record would fail. The mapping is not one-to-one.
 - **Formation agent addresses.** ARCHWAY FITNESS LIMITED is registered at 20-22 Wenlock Road, N1 7GU, the same address as the shell namesake of BP International that my own matching initially picked (section 5.4). Addresses shared by thousands of companies are recurring noise in any postcode match.
 
@@ -503,7 +523,7 @@ The brief states: "Nobody sells it, and there is no dataset to buy."
 
 That is not quite true. Two commercial services sell exactly this lookup, and the numbers they return verify. **The data exists. What does not exist is the right to redistribute it.** Every provider I found prohibits extraction, and the most explicit also prohibits building a competing service and requires deletion on termination.
 
-So the premise holds from Veridion's commercial position, but for a different  reason than it implies. It is not a gap in the data. It is a licensing wall around data someone has already assembled.
+So the premise holds from Veridion's commercial position, but for a different reason than it implies. It is not a gap in the data. It is a licensing wall around data someone has already assembled.
 
 That changes the question. Not "can it be built?" but "can it be built from sources whose terms allow it to be sold?" Among the sources tested:
 
@@ -518,7 +538,7 @@ The last row is the only one where both columns are favourable, and it is where 
 
 A smaller discrepancy: the brief cites roughly 4.2 million live companies. The September 2026 snapshot has 5.17 million with status "Active", plus 402,000 with a strike-off proposal pending. The difference lowers every ceiling in this report.
 
-## Part 2 - Proof of concept
+## 5. Part 2 - Proof of concept
 
 ### 5.1 The sample
 
@@ -539,8 +559,7 @@ So I restricted the population to companies that could plausibly be a supplier. 
 | Incorporation date invalid or before 1800 | 35 | Data errors |
 | **Kept** | **3,832,642** | |
 
-The filter lives in one shared module, used by both the profiling script and the sampling script, so the sample cannot drift from the population it describes. The counts of eligible companies per band reported by the two scripts match
-exactly.
+The filter lives in one shared module, used by both the profiling script and the sampling script, so the sample cannot drift from the population it describes. The counts of eligible companies per band reported by the two scripts match exactly.
 
 #### The filter I replaced
 
@@ -586,18 +605,18 @@ Fixed seed (23), so the same 300 companies are reproducible from the same snapsh
 ### 5.2 The pipeline
 
 ```
-candidate VAT number (from Source A, or Source C)
-|
-v
-mod-97 checksum -> discard if invalid
-|
-v
-HMRC checker -> UNKNOWN / MALFORMED / ERROR
-| VALID: registered name + address
-v
-entity match -> REJECT / UNCERTAIN
-| ACCEPT
-v
+candidate VAT number (from Source A or Source C)
+    |
+    v
+mod-97 checksum  -> discard if invalid
+    |
+    v
+HMRC checker     -> UNKNOWN / MALFORMED / ERROR
+    |  VALID: registered name + address
+    v
+entity match     -> REJECT / UNCERTAIN
+    |  ACCEPT
+    v
 (company number, VAT number)
 ```
 
@@ -611,7 +630,7 @@ v
 | MALFORMED | Rejected by the form's validation | yes |
 | ERROR | No answer: timeout, 429, parse failure | **no, retried** |
 
-ERROR is separate from UNKNOWN because a timeout is not an answer. Merged, a network failure would be counted as "this company has no VAT number", which is exactly how the rate-limit bug in section 4.1 corrupted 80 records.
+ERROR is separate from UNKNOWN because a timeout is not an answer. Merged, a network failure would be counted as "this company has no VAT number". The rate-limit bug in section 4.1 was the same class of error in the other direction: 80 failed lookups recorded as complete results.
 
 **The checksum is filtered locally.** The service does not apply it: GB111111111, GB999999999, GB555555555 and GB123456789 all fail mod-97 and all return UNKNOWN rather than MALFORMED. Validation stops at format (prefix, nine digits, no letters). So the only way to avoid spending requests on impossible numbers is to check them before sending.
 
@@ -621,7 +640,7 @@ ERROR is separate from UNKNOWN because a timeout is not an answer. Merged, a net
 2. The **postcode** decides among them. It is structured, normalisable, and the only field directly comparable between the two sources.
 3. If no candidate matches on postcode, the result is **UNCERTAIN**, rejected, and counted separately. Never "the first one found".
 
-**Client test.** Before any real run, the checker went through 27 numbers built to cover every path: 13 real VAT numbers, 11 deliberately corrupted, 3 malformed. Output 13 VALID, 11 UNKNOWN, 3 MALFORMED. Also confirmed: a second run served everything from cache, an interrupted run resumed where it stopped, and every VALID result had its HTML saved.
+**Client test.** Before any real run, the checker went through 27 numbers built to cover every path: 13 real VAT numbers, 11 deliberately invalid ones and 3 malformed. Output 13 VALID, 11 UNKNOWN, 3 MALFORMED. Also confirmed: a second run served everything from cache, an interrupted run resumed where it stopped, and every VALID result had its HTML saved.
 
 
 ### 5.3 Results
@@ -727,7 +746,7 @@ The same 13 test numbers showed something that is not strictly a false positive 
 | Barclays | BARCLAYS EXECUTION SERVICES LIMITED |
 | Sainsbury's | SAINSBURY'S SUPERMARKETS LTD |
 
-Whether that is right depends on which entity sits in the customer's supplier  record. Attaching the subsidiary's number to the parent would pass HMRC and still be wrong. This is where postcode matching earns its place: the registered address identifies which legal entity holds the number.
+Whether that is right depends on which entity sits in the customer's supplier record. Attaching the subsidiary's number to the parent would pass HMRC and still be wrong. This is where postcode matching earns its place: the registered address identifies which legal entity holds the number.
 
 
 ### 5.5 What these numbers do not capture
@@ -762,18 +781,18 @@ With resources, I would combine the two ideas around a join key the web already 
 
 ```
 crawl page
-|
-+-- company number found -> exact join to Companies House (no name matching)
-+-- VAT number found -> HMRC returns registered name and address
-|
-v
+    |
+    +-- company number found  -> exact join to Companies House (no name matching)
+    +-- VAT number found      -> HMRC returns registered name and address
+    |
+    v
 consistency check: does the HMRC name belong to the Companies House company?
-yes -> accept
-no -> reject, and flag the VAT number (likely an agency or a parent)
+    yes -> accept
+    no  -> reject, and flag the VAT number (likely an agency or a parent)
 ```
 
 
-This replaces fuzzy name matching with an exact join plus one check. It also turns the agency false positive into something detected automatically: anagency's VAT number printed next to a client's company number produces an HMRC
+This replaces fuzzy name matching with an exact join plus one check. It also turns the agency false positive into something detected automatically: an agency's VAT number printed next to a client's company number produces an HMRC
 name that does not match the Companies House record for that number.
 
 **The first thing I would measure** is how often a company number and a VAT number appear on the same page. My data suggests company numbers are published far more often than VAT numbers (several sites in the sample showed only the company number), but I did not measure the co-occurrence rate, and the design depends on it.
@@ -809,7 +828,7 @@ All figures are estimates with the assumption stated, so they can be argued with
 | Human review of uncertain attributions | 1 minute per case at about $20/hour; 25% of numbers today, falling with the join key | About $0.08 per number today |
 | Verification | Marginal cost near zero under an agreement | Not a budget line: a permission |
 
-**Per delivered VAT number: under $0.10, almost all of it human review.**Processing an entire crawl costs less than reviewing thirty uncertain attributions by hand.
+**Per delivered VAT number: under $0.10, almost all of it human review.** Processing an entire crawl costs about as much as six minutes of human review.
 
 #### Enriching one customer's supplier list
 
@@ -836,13 +855,13 @@ Two commercial providers already hold this data and forbid redistribution. A red
 
 ### 6.4 What breaks first
 
-**1. Verification, on day one.** The public checker blocked me after about 130 checks. At that budget, verifying 2.6 million harvested numbers would take over 50 years. This is policy at the CDN, not capacity (the application answers in 12ms), so more machines do not help, and rotating addresses to get around itwould be deliberate circumvention. The only route is a data agreement with HMRC, which runs into the API's stated purpose of trader due diligence. **Nothing else in this plan matters until this is settled.**
+**1. Verification, on day one.** The public checker blocked me after about 130 checks. At that budget, verifying 2.6 million harvested numbers would take over 50 years. This is policy at the CDN, not capacity (the application answers in 12ms), so more machines do not help, and rotating addresses to get around it would be deliberate circumvention. The only route is a data agreement with HMRC, which runs into the API's stated purpose of trader due diligence. **Nothing else in this plan matters until this is settled.**
 
 **2. Attribution at scale.** 25% wrong today. At 2.6 million numbers that is 650,000 wrong numbers, each one invisible to the customer. The join key in 6.1 is the main fix; the agency detector (a number on many unrelated domains) becomes reliable only at this volume.
 
 **3. The coverage ceiling.** Once crawling is solved, yield plateaus at whatever share of companies publish. Adding sources does not lift it much, because sources overlap: they reach the same well-documented companies.
 
-**4. Freshness.** A number verified today can be deregistered next month. Without re-verification the dataset decays silently, and re-verification runs  into constraint 1.
+**4. Freshness.** A number verified today can be deregistered next month. Without re-verification the dataset decays silently, and re-verification runs into constraint 1.
 
 ### 6.5 What I would monitor in production
 
@@ -864,7 +883,9 @@ Two commercial providers already hold this data and forbid redistribution. A red
 
 UK VAT numbers are 7 digits plus 2 check digits computed from them. Counting every 9-digit number that passes either of the two mod-97 rules:
 
+```
 20,615,843 checksum-valid numbers = 2.06% of the 1,000,000,000 possible
+```
 
 
 So the observation is real: it cuts the space fiftyfold. About 2.28 million of those are allocated, so roughly 11% would be hits.
@@ -898,12 +919,13 @@ Registrations and deregistrations are continuous, so every record needs a date a
 
 The brief says there is no reference dataset. For this customer, there is one: **the third of suppliers they already have a VAT number for.** Their invoices carry it, and the brief says it is the one identifier on both the invoice and the tax record.
 
-Run the pipeline on those companies as if the number were unknown, then compare.That measures precision directly, and it is the only place where **recall can be measured too**, because here "not found" can be told apart from "not registered". The caveat is bias: the known third is probably larger and better established than the rest, so rates measured on it are likely optimistic. Report them as an upper bound.
+Run the pipeline on those companies as if the number were unknown, then compare. That measures precision directly, and it is the only place where **recall can be measured too**, because here "not found" can be told apart from "not registered". The caveat is bias: the known third is probably larger and better established than the rest, so rates measured on it are likely optimistic. Report them as an upper bound.
 
 Beyond that, several signals need no reference:
 
-- **Internal contradictions.** One number on many unrelated domains (agencies) one company with several numbers; an HMRC postcode that disagrees with the Companies House postcode.
-- **Cross-source agreement.** A number found on the company's own site and in the crawl and derived from a published EORI is more trustworthy than one found once. **A standing audit.** A random sample reviewed by hand each cycle, with a confidence interval, tracked over time. Section 5 is the first round of it.
+- **Internal contradictions.** One number on many unrelated domains (agencies); one company with several numbers; an HMRC postcode that disagrees with the Companies House postcode.
+- **Cross-source agreement.** A number found on the company's own site and in the crawl and derived from a published EORI is more trustworthy than one found once.
+- **A standing audit.** A random sample reviewed by hand each cycle, with a confidence interval, tracked over time. Section 5 is the first round of it.
 - **The customer's own feedback.** Every new invoice that arrives with a VAT number is a free check against the record.
 
 ### 7.4 Sources I would not use in a product we sell
@@ -964,4 +986,5 @@ I have not established which countries fall in the third group. For Spain, the o
 ### Sources for this section
 
 - German Digital Services Act, Section 5 (official text): https://www.gesetze-im-internet.de/ddg/__5.html
+- French VAT key formula and its legal basis: https://hayot-expertise.fr/en/blog/french-tax-identification-number-2026-nif-siren-vat
 - French VAT key formula and legal basis: https://hayot-expertise.fr/en/blog/french-tax-identification-number-2026-nif-siren-vat
